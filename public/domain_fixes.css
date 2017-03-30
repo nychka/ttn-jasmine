@@ -1,0 +1,197 @@
+.preloader_banner.banner_bg_6 .bigbg {
+  background: none;
+}
+.cancel_travel_wrapp .policies_table .overlay_checked {
+  top: -5px;
+  height: 70px;
+}
+.cancel_travel_wrapp .labeltxt {
+  padding: 5px 30px 0 0;
+  width: 90%;
+}
+.cancel_travel_wrapp .slider_wrapper {
+  width: 305px;
+}
+.cancel_travel_wrapp .min_value {
+  right: 95%;
+  padding-top: 10px;
+}
+.cancel_travel_wrapp .max_value {
+  left: 80%;
+  padding-top: 10px;
+}
+#flight_cancellation_slider {
+  width: 300px;
+}
+.policies_table .overlay_checked {
+  height: 55px;
+}
+.insurance_body .search_field {
+  padding: 0;
+}
+.insurance_body .i_certify {
+  margin: 20px 0;
+}
+.new_search_form #TerritoryCountries {
+  width: 233px;
+}
+.new_search_form #TerritoryCountries li {
+  width: 100%;
+  float: none;
+  margin: 0 0 -1px 0;
+}
+.segment_item .icheckbox_minimal:after {
+  top: 21px;
+  left: 22px;
+}
+.ui-accordion .policy_block .subblock .segment_item .icheckbox_minimal:before {
+  top: 20px;
+  left: 30px;
+}
+.ui-accordion .policy_block .subblock .segment_item .icheckbox_minimal:after {
+  top: 20px;
+  left: 31px;
+}
+.bonus-page .section-04 {
+  background: #232075;
+}
+.popup h3 {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 18px 0 12px;
+}
+.popup h3 a {
+  font-size: 16px;
+  color: #0063b8;
+}
+.preloader_ETH ul {
+  width: 480px;
+}
+.tab-content_service_1 {
+  position: relative;
+}
+.tab-content_service_1.additional-service {
+  padding: 0 10px;
+  background: transparent;
+}
+.tab-content_service_1.additional-service:before {
+  content: '';
+  width: 400px;
+  height: 90%;
+  background: #e3df99;
+  position: absolute;
+  right: 0;
+  bottom: 0px;
+  border-radius: 100% 0 0 0;
+  z-index: 1;
+}
+.tab-content_service_1.additional-service:after {
+  content: '';
+  width: 320px;
+  height: 65%;
+  background: #bfb52a;
+  position: absolute;
+  right: 0;
+  bottom: 0px;
+  z-index: 1;
+  border-radius: 100% 0 0 0;
+}
+.tab-content_service_1.additional-service .insurance-heading {
+  padding-top: 10px;
+}
+.tab-content_service_1.additional-service .insurance-heading:after {
+  content: "";
+  clear: both;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+}
+.tab-content_service_1.additional-service .insurance-heading strong {
+  font-size: 16px;
+  color: #000000;
+}
+.tab-content_service_1.additional-service .insurance-heading .text-block {
+  margin: 5px 0px 0 15px;
+  line-height: 1.5;
+}
+.tab-content_service_1.additional-service .insurance-table {
+  position: relative;
+  z-index: 2;
+}
+.insurance-table th,
+.insurance-table td {
+  border: solid 1px #bcb42a;
+}
+.additional-insurance-block {
+  position: relative;
+  z-index: 3;
+  margin: 25px -12px 0 -12px;
+  padding: 20px;
+  background: #DFEFF9;
+}
+.additional-insurance-block .additional-insurance-table {
+  border: 1px solid #d4dae7;
+  background: #fff;
+}
+.additional-insurance-block .additional-insurance-table:after {
+  content: "";
+  clear: both;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+}
+.additional-insurance-block .additional-insurance-table strong {
+  font-size: 14px;
+  color: #22225e;
+  line-height: 1.5;
+}
+.additional-insurance-block .additional-insurance-table a {
+  font-size: 12px;
+  display: block;
+  margin-top: 10px;
+}
+.additional-insurance-block .additional-insurance-table span {
+  display: block;
+  margin-top: 3px;
+  color: #767676;
+}
+.additional-insurance-block .additional-insurance-table .item {
+  padding: 20px;
+}
+.additional-insurance-block .additional-insurance-table .item:first-child {
+  border-right: 1px solid #d4dae7;
+}
+.additional-insurance-block .additional-insurance-table .accept-block {
+  padding-left: 30px;
+}
+.additional-insurance-block .additional-insurance-table .accept-block label {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.additional-insurance-block .additional-insurance-table .price {
+  text-align: right;
+}
+.additional-insurance-block .additional-insurance-table .price span {
+  color: #22225e;
+}
+.cabinet_order_page .additional-insurance-block {
+  margin: 25px 0px 10px 0px;
+}
+.cabinet_order_page .additional-insurance__heading {
+  display: block;
+}
+.cabinet_order_page .insurance-heading {
+  display: none !important;
+}
+.insurance-table_cabinet .text-block {
+  margin: 5px 0px 0 15px;
+  line-height: 1.5;
+}
+.insurance-heading:after {
+  content: "";
+  clear: both;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+}

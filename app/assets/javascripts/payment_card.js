@@ -168,7 +168,7 @@ function PaymentCard(){
     this.addValidationRule = function(){
         this.getFirstInput()
             .addClass(this.validationRule)
-            .removeClass('valid_card_number')
+            //.removeClass('valid_card_number');
             .removeClass('valid_card_number_visa_master');
     };
     this.removeValidationRule = function(){
@@ -190,6 +190,22 @@ function PaymentCard(){
 
             return matches;
         }, "Please enter a valid card number. Maestro MOMENTUM");
+    };
+    this.passLuhnAlgorythm = function(numbers)
+    {
+        var sum = 0;
+        var length = 0;
+        numbers = numbers.replace(/\s/g, '');
+        for (var i = 0; i < numbers.length; i++) {
+            var intVal = parseInt(numbers.substr(i, 1));
+            if (i % 2 == 0) {
+                intVal *= 2;
+                if (intVal > 9) {intVal = 1 + (intVal % 10);}
+            }
+            sum += intVal;
+        }
+        // console.log('sum', sum, 'length', numbers.length, sum % 10 == 0);
+        return (sum % 10 == 0);
     };
     this.init = function(){
         this.bindListener();

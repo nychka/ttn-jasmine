@@ -1306,10 +1306,10 @@ $(document).ready(function(){
         return /^[0-9_\-'" \(\)]+$/.test(value);
     }, "Please enter a valid phone code.");
 
-    // $.validator.addMethod("valid_phone_code_compare", function(value, element){
-    // 	if (typeof availableCodes === "undefined" )  return true;
-    // 	return availableCodes.indexOf(value) !== -1;
-    // }, validation_errors.valid_phone_code);
+    $.validator.addMethod("valid_phone_code_compare", function(value, element){
+    	if (typeof availableCodes === "undefined" )  return true;
+    	return availableCodes.indexOf(value) !== -1;
+    }, validation_errors.valid_phone_code);
 
     $.validator.addMethod("valid_docnum", function(value, element){
         return (value.length >= 6 && value.length <= 12);
@@ -1594,8 +1594,6 @@ $(document).ready(function(){
 			$(element).parents('.card_num').find('input').each(function() {
 				card_number += $(this).val();
 			});
-			var right_length = (length == 16 || length == 18);
-			
 			for (var i = 0; i < card_number.length; i++) {
 				var intVal = parseInt(card_number.substr(i, 1));
 				if (i % 2 == 0) {
@@ -1604,10 +1602,10 @@ $(document).ready(function(){
 				}
 				sum += intVal;
 			}
-			if(!((sum % 10) == 0 && right_length) && (window['front_version'] == 'mobile'  || window['front_version'] == 'v2')){
+			if(!((sum % 10) == 0 && length == 16) && (window['front_version'] == 'mobile'  || window['front_version'] == 'v2')){
 				$(element).parents('.card-num-wrapper').addClass('error');
 			}
-			return ((sum % 10) == 0 && right_length);
+			return ((sum % 10) == 0 && length == 16)
     }, "Please enter a valid card number.");
 
     $.validator.addMethod("valid_expiry_date", function(value, element){
@@ -1962,17 +1960,17 @@ $(document).ready(function(){
         return valid;
     }, 'Invalid time range');
 
-	// $.validator.addMethod("check_file", function (value, element) {
-	// 	var valid = true;
-	// 	if (element.files && element.files[0]) {
-	// 		var size = parseInt(element.files[0].size, 10);
-	// 		valid = size < 3145728 && size > 0;
-	// 		if (["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain", "application/msword", "image/png", "image/gif", "image/jpeg", "image/jpg", "application/pdf", "application/x-download"].indexOf(element.files[0].type) == -1) {
-	// 			valid = false;
-	// 		}
-	// 	}
-	// 	return valid;
-	// }, window.I18n.check_file);
+	$.validator.addMethod("check_file", function (value, element) {
+		var valid = true;
+		if (element.files && element.files[0]) {
+			var size = parseInt(element.files[0].size, 10);
+			valid = size < 3145728 && size > 0;
+			if (["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain", "application/msword", "image/png", "image/gif", "image/jpeg", "image/jpg", "application/pdf", "application/x-download"].indexOf(element.files[0].type) == -1) {
+				valid = false;
+			}
+		}
+		return valid;
+	}, window.I18n.check_file);
 
     $.validator.addMethod("input_group_max_length", function(value, element){
   		var group_name = $(element).data('input-group'), valid = true;

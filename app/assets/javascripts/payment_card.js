@@ -207,7 +207,115 @@ function PaymentCard(){
         // console.log('sum', sum, 'length', numbers.length, sum % 10 == 0);
         return (sum % 10 == 0);
     };
+    this.getCardBlocks = function()
+    {
+        var selector = '.card_data';
+        var blocks = $(selector);
+        if(!(blocks && blocks.length)) throw ('No card block found! Check ' + selector + ' at first');
+        if(!this.hasOwnProperty('card_blocks')) this.card_blocks = blocks;
+        
+        return this.card_blocks;
+    };
+    this.getWrapper = function()
+    {
+        var selector = '.card_data',
+            block = $(selector + ':visible');
+        if(!(block)) throw ('No card block found! Check ' + selector + ' at first');
+        if(!this.hasOwnProperty('active_wrapper')) this.active_wrapper = block;
+
+        return this.active_wrapper;
+    };
+    this.switchWrapper = function(block)
+    {
+        if(block && (typeof block['parent'] === 'function') && block.parent().length){
+            this.active_wrapper = block;
+        }else{
+            throw('card block you are trying to switch is not exist!');
+        }
+    };
+    this.getContext = function()
+    {
+        var wrapper = this.getWrapper();
+        var context = {
+            'card_block':       wrapper,
+            'card_number_0':    wrapper.find('#card_number_0'),
+            'card_number_1':    wrapper.find('#card_number_1'),
+            'card_number_2':    wrapper.find('#card_number_2'),
+            'card_number_3':    wrapper.find('#card_number_3'),
+            'card_date_month':  wrapper.find('#card_date_month'),
+            'card_date_year':   wrapper.find('#card_date_year'),
+            'card_holder':      wrapper.find('#card_holder'),
+            'card_cvv':         wrapper.find('#card_cvv')
+        };
+        return context;
+    };
+    this.getCurrentState = function()
+    {
+        if(!this.hasOwnProperty('current_state')){
+            var states = this.getAllStates();
+            this.current_state = states['default'];
+        }
+       
+        return this.current_state;
+    };
+    this.getAllStates = function()
+    {
+        if(!this.hasOwnProperty('states')){
+            var states = { 
+                'default': new DefaultState(),
+                'momentum_activated': new MomentumActivatedState(),
+                'momentum_filled': new MomentumFilledState()
+            };
+            this.states = states;
+        }
+
+        return this.states;
+    };
+    this.getState = function(state)
+    {   
+        var states = this.getAllStates();
+        if(!states[state]) throw('State '+state+' not found!');
+
+        return states[state];
+    };
+    this.transitToState = function(state)
+    {
+        var state = this.getState(state);
+        this.current_state = state;
+    };
     this.init = function(){
         this.bindListener();
     };
-}
+};
+
+function DefaultState()
+{
+    this.name = 'default';
+    this.handle = function(context)
+    {
+        // console.log(context);debugger;
+        context['card_holder'].prop('required', false);
+    };
+    this.getName = function()
+    {
+       return this.name;
+    }
+};
+function MomentumActivatedState()
+{
+    this.name = 'momentum_activated';
+    this.handle = function(context)
+    {
+        // console.log(context);debugger;
+        context['card_holder'].prop('required', false);
+    }
+};
+function MomentumFilledState()
+{
+    this.name = 'momentum_filled';
+    this.handle = function(context)
+    {
+        // console.log(context);debugger;
+        context['card_holder'].prop('required', false);
+    }
+};

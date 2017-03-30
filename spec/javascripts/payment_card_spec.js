@@ -270,6 +270,98 @@ describe("PaymentCard", function(){
             expect(card.passLuhnAlgorythm('6368 5168 7572 9732')).toBeFalsy();
             expect(card.passLuhnAlgorythm('6368516875729731')).toBeTruthy();
         });
+        it('::getCardBlocks', function(){
+            loadFixtures('maestro_momentum.html');
+            var card = new PaymentCard();
+            var blocks = $('.card_data');
+            expect(blocks.length).toEqual(4);
+            expect(card.hasOwnProperty('card_blocks')).toBeFalsy();
+            expect(card.getCardBlocks()).toEqual(blocks);
+        });
+        it('::getWrapper', function(){
+            loadFixtures('maestro_momentum.html');
+            var card = new PaymentCard();
+            var wrapper = $('.card_data:visible');
+            expect(card.getWrapper()).toEqual(wrapper);
+        });
+        it('::switchWrapper', function(){
+            loadFixtures('maestro_momentum.html');
+            var card = new PaymentCard();
+            var active_block = $('#aircompany0_block .card_data:visible');
+            var disabled_block = $('#aircompany1_block .card_data:hidden');
+
+            expect(disabled_block).toBeInDOM();
+            expect(card.getWrapper()).toEqual(active_block);
+            expect(card.switchWrapper(disabled_block));
+            expect(card.getWrapper()).toEqual(disabled_block);
+        });
+         it('::getContext', function(){
+            loadFixtures('maestro_momentum.html');
+            var card = new PaymentCard();
+            var active_block = card.getWrapper();
+            var inputs = active_block.find('.card_input');
+            var context = {
+                'card_block':       active_block,
+                'card_number_0':    active_block.find('#card_number_0'),
+                'card_number_1':    active_block.find('#card_number_1'),
+                'card_number_2':    active_block.find('#card_number_2'),
+                'card_number_3':    active_block.find('#card_number_3'),
+                'card_date_month':  active_block.find('#card_date_month'),
+                'card_date_year':   active_block.find('#card_date_year'),
+                'card_holder':      active_block.find('#card_holder'),
+                'card_cvv':         active_block.find('#card_cvv')
+            };
+            expect(inputs.length).toEqual(8);
+            expect(card.getContext()).toEqual(context);
+        });
+        it('::getCurrentState', function(){
+            loadFixtures('maestro_momentum.html');
+            var card = new PaymentCard();
+            var state = card.getCurrentState();
+
+            expect(state instanceof DefaultState).toBeTruthy();
+        });
+        it('::getAllStates', function(){
+            var card = new PaymentCard();
+            var states = card.getAllStates();
+
+            expect(Object.keys(states).length).toEqual(3);
+            expect(states['default'] instanceof DefaultState).toBeTruthy();
+            expect(states['momentum_activated'] instanceof MomentumActivatedState).toBeTruthy();
+            expect(states['momentum_filled'] instanceof MomentumFilledState).toBeTruthy();
+        });
+        it('::getState', function(){
+            var card = new PaymentCard();
+            var state = card.getState('default');
+
+            expect(state instanceof DefaultState).toBeTruthy();
+        });
+        it('::transitToState', function(){
+            var card = new PaymentCard();
+            var state = card.getState('momentum_activated');
+            var current_state = card.getCurrentState();
+
+            expect(current_state instanceof DefaultState).toBeTruthy();
+            card.transitToState('momentum_activated');
+            expect(card.getCurrentState() instanceof MomentumActivatedState).toBeTruthy();
+        });
+        describe('State', function(){
+            it('::handle', function(){
+                loadFixtures('maestro_momentum.html');
+                var card = new PaymentCard();
+                var context = card.getContext();
+                var state = new DefaultState();
+
+                expect(context.card_holder.prop('required')).toBeTruthy();
+                state.handle(context);
+                expect(context.card_holder.prop('required')).toBeFalsy();
+            });
+            it('::getName', function(){
+                var state = new DefaultState();
+
+                expect(state.getName()).toEqual('default');
+            });
+        });
         describe('when active', function(){
             it('when enters 18 signs form is valid according to Luhn\'s algorythm', function(){
                 loadFixtures('maestro_momentum.html');
@@ -530,12 +622,6 @@ describe("PaymentCard", function(){
                     expect(first).toHaveClass('valid_card_number_maestro_momentum');
                     expect(first).toHaveClass('valid_card_number');
                 });
-            });
-            xit('fixes tab index', function(){
-                //TODO:
-            });
-            xit('prepares validation rule for jquery validator plugin', function(){
-                //TODO:
             });
         });
         describe('when unactive', function(){

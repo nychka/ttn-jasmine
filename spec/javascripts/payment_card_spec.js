@@ -4,29 +4,27 @@
  - підготувати середовище
  */
 describe("PaymentCard", function(){
-    it("has label from 16 to 18 signs", function(){
+    beforeEach(function(){
         loadFixtures("maestro_momentum.html");
+    });
+    it("has label from 16 to 18 signs", function(){
         var text = $('.card-number:visible label').text();
         expect(text).toEqual('Номер карты (от 16 до 18 цифр)');
     });
     it('has 4 card blocks', function(){
-        loadFixtures('maestro_momentum.html');
         var blocks = $('.way_description_block_aircompany .card_num');
         expect(blocks.length).toEqual(4);
     });
     it('has additional input on each card block', function(){
-        loadFixtures('maestro_momentum.html');
         var blocks = $('.card_num #card_number_4');
         expect(blocks.length).toEqual(4);
     });
     it('additional input is disabled by default', function(){
-        loadFixtures('maestro_momentum.html');
         var input = $('#card_number_4');
         expect(input.prop('disabled')).toBeTruthy();
     });
     describe('Default Validation', function(){
         it('form is not valid cardholder, month, year and cvv are empty', function(){
-            loadFixtures('maestro_momentum.html');
             var active_block = $('.card_number:visible');
             var form = $('form');
             var form_validator = form.validate();
@@ -51,7 +49,6 @@ describe("PaymentCard", function(){
             expect(form_validator.errorList[3].message).toEqual('This field is required.');
         });
         it('validates first card number with invalid card type 3168', function(){
-            loadFixtures('maestro_momentum.html');
             var form = $('form');
             var form_validator = form.validate();
             $('#card_number_0').val('3168');
@@ -62,7 +59,6 @@ describe("PaymentCard", function(){
             expect(form_validator.errorList[0].message).toEqual('Please enter a valid card number.');
         });
         it('validates first card number with card type VISA 4168', function(){
-            loadFixtures('maestro_momentum.html');
             var form = $('form');
             var form_validator = form.validate();
             var first_card_number = $('#card_number_0');
@@ -77,7 +73,6 @@ describe("PaymentCard", function(){
             expect(form_validator.errorList[0].message).toEqual('This field is required.');
         });
         it('validates date month with invalid number 13', function(){
-            loadFixtures('maestro_momentum.html');
             var form = $('form');
             var form_validator = form.validate();
             var first_card_number = $('#card_number_0');
@@ -94,7 +89,6 @@ describe("PaymentCard", function(){
             expect(form_validator.errorList[0].message).toEqual('Please enter a valid expiration date.');
         });
         it('validates date year with invalid expiration date', function(){
-            loadFixtures('maestro_momentum.html');
             var form = $('form');
             var form_validator = form.validate();
             var first_card_number = $('#card_number_0');
@@ -112,7 +106,6 @@ describe("PaymentCard", function(){
             expect(form_validator.errorList[0].message).toEqual('Please enter a valid expiration date.');
         });
         it('validates card holder with with empty string', function(){
-            loadFixtures('maestro_momentum.html');
             var form = $('form');
             var form_validator = form.validate();
             var first_card_number = $('#card_number_0');
@@ -130,7 +123,6 @@ describe("PaymentCard", function(){
             expect(form_validator.errorList[0].message).toEqual('This field is required.');
         });
         it('validates card cvv with with empty string', function(){
-            loadFixtures('maestro_momentum.html');
             var form = $('form');
             var form_validator = form.validate();
             $('#card_number_0').val('4168');
@@ -147,7 +139,6 @@ describe("PaymentCard", function(){
             expect(form_validator.errorList[0].message).toEqual('This field is required.');
         });
         it('validates card cvv with with invalid number 12', function(){
-            loadFixtures('maestro_momentum.html');
             var form = $('form');
             var form_validator = form.validate();
             $('#card_number_0').val('4168');
@@ -165,7 +156,6 @@ describe("PaymentCard", function(){
             expect(form_validator.errorList[0].message).toEqual('Please enter a valid card number.');
         });
         it('validates form with correct data', function(){
-            loadFixtures('maestro_momentum.html');
             var form = $('form');
             var form_validator = form.validate();
             $('#card_number_0').val('4168');
@@ -181,7 +171,6 @@ describe("PaymentCard", function(){
             expect(form_validator.errorList.length).toEqual(0);
         });
         it('is not valid when enters only 2 digits', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             var form = $('form');
             var form_validator = form.validate();
@@ -212,60 +201,49 @@ describe("PaymentCard", function(){
     });
     describe('Maestro Momentum', function(){
         it('checks card wrapper', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             expect(card.getWrapper()).toExist();
         });
         it('checks card input wrapper', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             expect(card.cardInputWrapper).toExist();
         });
         it('::getNumberInputs', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             expect(card.getNumberInputs().length).toEqual(20);
         });
         it('::getActiveNumberInputs()', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             expect(card.getActiveNumberInputs().length).toEqual(5);
         });
         it('::getCount() with 0', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             expect(card.getCount()).toEqual(0);
         });
         it('::getCount() with 4', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             $('#card_number_0').val(1234);
             expect(card.getCount()).toEqual(4);
         });
         it('::numberStarts() with 63', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             expect(card.numberStarts('63')).toBeTruthy();
         });
         it('::numberStarts() with 63', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             expect(card.numberStarts('63')).toBeTruthy();
         });
         it('::numberStarts() with 63', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             expect(card.numberStarts('63')).toBeTruthy();
         });
         it('::getFirstInput', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             var input = card.getFirstInput();
             expect(input).toBeInDOM();
             expect(input).toHaveId('card_number_0');
         });
         it('::passLuhnAlgorythm', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             expect(card.passLuhnAlgorythm('6368 5168 7572 9718 56')).toBeTruthy();
             expect(card.passLuhnAlgorythm('6368 5168 7572 9718 55')).toBeFalsy();
@@ -274,7 +252,6 @@ describe("PaymentCard", function(){
             expect(card.passLuhnAlgorythm('6368516875729731')).toBeTruthy();
         });
         it('::getCardBlocks', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             var blocks = $('.card_data');
             expect(blocks.length).toEqual(4);
@@ -282,13 +259,11 @@ describe("PaymentCard", function(){
             expect(card.getCardBlocks()).toEqual(blocks);
         });
         it('::getWrapper', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             var wrapper = $('.card_data');
             expect(card.getWrapper()).toEqual(wrapper);
         });
         it('::bindFirstNumberListener', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             var card_number = card.getFirstInput();
             card.bindFirstInputListener();
@@ -304,7 +279,6 @@ describe("PaymentCard", function(){
             expect(current_state.name).toEqual('default');
         });
          it('::getContext', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             var active_block = card.getWrapper();
             var inputs = active_block.find('.card_input');
@@ -326,7 +300,6 @@ describe("PaymentCard", function(){
             expect(card.getContext()).toEqual(context);
         });
         it('::getCurrentState', function(){
-            loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             var state = card.getCurrentState();
 
@@ -358,7 +331,6 @@ describe("PaymentCard", function(){
         });
         describe('State', function(){
             it('::handle', function(){
-                loadFixtures('maestro_momentum.html');
                 var card = new PaymentCard();
                 var context = card.getContext();
                 var state = card.getState('momentum_activated');
@@ -375,7 +347,6 @@ describe("PaymentCard", function(){
         });
         describe('State Contexts', function(){
             beforeEach(function(){
-                loadFixtures('maestro_momentum.html');
                 this.card = new PaymentCard();
             });
             describe('Default', function(){
@@ -586,7 +557,6 @@ describe("PaymentCard", function(){
         });
         describe('when active', function(){
             it('when enters 18 signs form is valid according to Luhn\'s algorythm', function(){
-                loadFixtures('maestro_momentum.html');
                     var card = new PaymentCard();
                     card.transitToState('momentum_activated');
                     var form = $('form');
@@ -618,7 +588,6 @@ describe("PaymentCard", function(){
                     expect(form.valid()).toBeTruthy();
             });
             it('when enters 18 signs form is not valid: violates Luhn algorythm', function(){
-                loadFixtures('maestro_momentum.html');
                     var card = new PaymentCard();
                     card.transitToState('momentum_activated');
                     var form = $('form');
@@ -649,7 +618,6 @@ describe("PaymentCard", function(){
                     expect(form.valid()).toBeFalsy();
             });
             it('form is not valid when enters only 2 digits', function(){
-                loadFixtures('maestro_momentum.html');
                     var card = new PaymentCard();
                     card.transitToState('momentum_activated');
                     var form = $('form');
@@ -678,7 +646,6 @@ describe("PaymentCard", function(){
                     expect(form.valid()).toBeFalsy();
             });
             it('appends additional input with XX placeholder', function(){
-                loadFixtures('maestro_momentum.html');
                 var card = new PaymentCard();
                 card.transitToState('momentum_activated');
                 expect($('#card_number_4')).toExist();
@@ -694,7 +661,6 @@ describe("PaymentCard", function(){
                 expect($('#card_holder_not_required')).toBeVisible();
             });
             it('adds validation rule for first input', function(){
-                loadFixtures('maestro_momentum.html');
                 var card = new PaymentCard();
                 card.transitToState('momentum_activated');
                 var first_input = card.getFirstInput();
@@ -704,7 +670,6 @@ describe("PaymentCard", function(){
             });
             describe('enters 16 signs', function(){
                 it('all inputs are active', function(){
-                    loadFixtures('maestro_momentum.html');
                     var card = new PaymentCard();
                     card.transitToState('momentum_activated');
                     var form = $('form');
@@ -744,7 +709,6 @@ describe("PaymentCard", function(){
                     expect(first).toHaveClass('valid_card_number');
                 });
                 it('cvv is required and link #if_you_have_cvv is hidden', function(){
-                    loadFixtures('maestro_momentum.html');
                     var card = new PaymentCard();
                     card.transitToState('momentum_activated');
                     var form = $('form');
@@ -776,7 +740,6 @@ describe("PaymentCard", function(){
                     expect(cvv).toHaveAttr('required');
                 });
                 it('card holder is not required and label #card_holder_not_required is visible', function(){
-                    loadFixtures('maestro_momentum.html');
                     var card = new PaymentCard();
                     card.transitToState('momentum_activated');
                     var form = $('form');
@@ -807,7 +770,6 @@ describe("PaymentCard", function(){
                     expect($('#card_holder_not_required')).toBeVisible();
                 });
                 it('first input has class .valid_card_number_maestro_momentum', function(){
-                    loadFixtures('maestro_momentum.html');
                     var card = new PaymentCard();
                     card.transitToState('momentum_activated');
                     var form = $('form');
@@ -876,7 +838,6 @@ describe("PaymentCard", function(){
         });
         describe('MultiBlock', function(){
             it('bind listeners to all available card blocks', function(){
-                loadFixtures('maestro_momentum.html');
                 var card = new PaymentCard();
                 card.bindFirstInputListener();
                 var card_blocks = card.getCardBlocks();
@@ -896,7 +857,6 @@ describe("PaymentCard", function(){
                 expect(disabled_first).toHaveClass('valid_card_number_maestro_momentum');
             });
             it('binds listener for operate', function(){
-                loadFixtures('maestro_momentum.html');
                 var card = new PaymentCard();
                 card.bindFirstInputListener();
                 card.bindListeners();

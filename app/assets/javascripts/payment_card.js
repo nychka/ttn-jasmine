@@ -10,9 +10,12 @@ function PaymentCard(){
         var numbers = wrapper.find(this.cardInputWrapper + ' input');
         return numbers;
     };
+    this.getActiveNumberInputs = function(){
+      return $(this.cardInputWrapper + ' input:visible');
+    };
     this.getCount = function(){
         var count = 0;
-        var numbers = this.getNumberInputs();
+        var numbers = this.getActiveNumberInputs();
 
         numbers.each(function(i, number){
             count += number.value.length;
@@ -22,17 +25,14 @@ function PaymentCard(){
     };
     this.bindListeners = function(){
         var self = this;
-        var numbers = $(this.cardInputWrapper + ' input');//this.getNumberInputs();
-        // var numbers = this.getNumberInputs();
-        console.assert(20, numbers.length);
+        var numbers = $(this.cardInputWrapper + ' input');
+
         numbers.each(function(i, number){
-            $(number).on('keyup', function(e){
-                self.operate(e);
-            });
+          $(number).on('keyup', function(e){ self.operate(e); });
         });
     };
     this.getFirstInput = function(){
-        return this.getNumberInputs().first();
+        return $(this.cardInputWrapper + ' ' + this.firstInputSelector);
     };
     this.numberStarts = function(number){
         var starts = false;
@@ -47,49 +47,32 @@ function PaymentCard(){
     };
     this.setActive = function(active)
     {
-        // if(this.active !== active){
-        //   console.log('MOMENTUM: ', (active ? 'ACTIVATED' : 'DEACTIVATED'));
-        // }
         this.active = active;
     };
-    this.disableInput = function(input)
+    this.debug = function(message)
     {
-        input.val('').prop('disabled', true);
-    };
-    this.enableInput = function(input)
-    {
-        input.prop('disabled', false);
+      if(window.time_to_debug){
+        console.log(message);
+      }
     };
     this.operate = function(e){
-        var self = this;
-        var count = this.getCount();
-        var wrapper = this.getWrapper();
+      var current_state = this.getCurrentState();
+      var count = this.getCount();
+      this.debug('count: ' + count + ' state: ' + current_state.name);
+      try{
+        var numbers = ''; this.getActiveNumberInputs().map(function(i, input){ return numbers += $(input).val(); }); 
+        this.passLuhnAlgorythm(numbers);
+      }catch(e){ this.debug(e.message); }
+      
 
-        if(this.getCount() === 18){
-            console.log('interesting things coming)))...');
-            wrapper.find('.card_owner').hide();
-            this.disableInput(wrapper.find('#card_holder'));
-            wrapper.find('.card_cvv').hide();
-            this.disableInput(wrapper.find('#card_cvv'));
-            wrapper.find('#if_you_have_cvv')
-                .removeAttr('disabled')
-                .show()
-                .off().on('click', function(e){
-                e.preventDefault();
-                self.enableInput(wrapper.find('#card_cvv'));
-                wrapper.find('.card_cvv').show();
-                wrapper.find('#if_you_have_cvv').hide();
-            });
-        }else{
-            // console.log('it is boring..(((');
-            if(wrapper.find('.card_owner').is(':hidden')){
-                this.enableInput(wrapper.find('#card_holder'));
-                this.enableInput(wrapper.find('#card-cvv'));
-                wrapper.find('.card_owner').show();
-                wrapper.find('.card_cvv').show();
-                wrapper.find('#if_you_have_cvv').hide();
-            }
-        }
+      if(count == 18 && current_state.name == 'momentum_activated'){
+        this.transitToState('momentum_filled');
+        this.debug('count: ' + count + ' state: ' + current_state.name + ' next: momentum_filled');
+      }
+      if(count < 18 && current_state.name == 'momentum_filled'){
+        this.transitToState('momentum_activated');
+        this.debug('count: ' + count + ' state: ' + current_state.name + ' next: momentum_activated');
+      }
     };
     this.bindFirstInputListener = function(){
         var self = this;
@@ -97,37 +80,12 @@ function PaymentCard(){
         
         firstInput.on('keyup', function(e){
             var active = self.numberStarts(e.target.value);
-            self.setActive(active);
             
-            if(active){
-               console.log('----active first');
-                self.whenActive();
-                self.transitToState('momentum_activated');
-            }else{
-                console.log('----not active first');
-                self.whenUnactive();
-                self.transitToState('default');
+            if(active !== this.active){
+              active ? self.transitToState('momentum_activated') :  self.transitToState('default');
             }
+            self.setActive(active);
         });
-    };
-    this.getAdditionalInput = function(){
-        var wrapper = this.getWrapper();
-        return wrapper.find('#card_number_4');
-    };
-    this.whenUnactive = function(){
-        this.removeValidationRule();
-        var wrapper = this.getWrapper();
-        wrapper.find('#card_number_4').prop('disabled', true).hide().val('');
-        $('#card_holder_not_required').hide();
-        $('#card_holder').attr('required', 'required');
-    };
-    this.whenActive = function(){
-        this.prepareValidationRule();
-        this.addValidationRule();
-        var wrapper = this.getWrapper();
-        wrapper.find('#card_number_4').prop('disabled', false).show();
-        $('#card_holder').removeAttr('required');
-        $('#card_holder_not_required').removeAttr('hidden').show();
     };
     this.addValidationRule = function(){
         this.getFirstInput()
@@ -135,24 +93,27 @@ function PaymentCard(){
             .removeClass('valid_card_number_visa_master');
     };
     this.removeValidationRule = function(){
+      if(!this.getFirstInput().hasClass(this.validationRule)) return false;
         this.getFirstInput()
             .removeClass(this.validationRule)
             .addClass('valid_card_number')
             .addClass('valid_card_number_visa_master');
     };
     this.prepareValidationRule = function(){
-        var self = this;
+      var self = this;
 
+      if(typeof $.validator.methods[this.validationRule] !== 'function'){
         $.validator.addMethod(self.validationRule, function(value, element){
-            var first_n = $(element).parents('.card_num').find('input:first').val().substr(0, 2);
+          var first_n = $(element).parents('.card_num').find('input:first').val().substr(0, 2);
 
-            var matches = self.numberStarts(first_n);
-            if(!matches){
-                $(element).parent().addClass('error');
-            }
+          var matches = self.numberStarts(first_n);
+          if(!matches){
+              $(element).parent().addClass('error');
+          }
 
-            return matches;
+          return matches;
         }, "Please enter a valid card number. Maestro MOMENTUM");
+      }  
     };
     this.passLuhnAlgorythm = function(numbers)
     {
@@ -167,7 +128,7 @@ function PaymentCard(){
             }
             sum += intVal;
         }
-        // console.log('sum', sum, 'length', numbers.length, sum % 10 == 0);
+        this.debug('sum: '+ sum+ ' length: '+ numbers.length+' valid: '+ (sum % 10 == 0));
         return (sum % 10 == 0);
     };
     this.getCardBlocks = function()
@@ -182,25 +143,18 @@ function PaymentCard(){
     this.getWrapper = function()
     {
         var selector = '.card_data',
-            block = $(selector + ':visible');
+            block = $(selector);
         if(!(block)) throw ('No card block found! Check ' + selector + ' at first');
         if(!this.hasOwnProperty('active_wrapper')) this.active_wrapper = block;
 
         return this.active_wrapper;
     };
-    this.switchWrapper = function(block)
-    {
-        if(block && (typeof block['parent'] === 'function') && block.parent().length){
-            this.active_wrapper = block;
-        }else{
-            throw('card block you are trying to switch is not exist!');
-        }
-    };
     this.getContext = function()
     {
         var wrapper = this.getWrapper();
         var context = {
-            'card_block':       wrapper,
+            'self':             this,
+            'wrapper':          wrapper,
             'card_number_0':    wrapper.find('#card_number_0'),
             'card_number_1':    wrapper.find('#card_number_1'),
             'card_number_2':    wrapper.find('#card_number_2'),
@@ -244,11 +198,26 @@ function PaymentCard(){
     };
     this.transitToState = function(state)
     {
-        var state = this.getState(state);
-        this.current_state = state;
+      this.debug('transit from: ' + this.getCurrentState()['name'] + ' to: ' + state);
+      var state = this.getState(state);
+      var context = this.getContext();
+      state.handle(context);
+      this.current_state = state;
+    };
+    this.bindLinkIfYouHaveCvv = function(){
+      var self = this,
+          wrapper = this.getWrapper();
+
+      wrapper.find('#if_you_have_cvv').on('click', function(e){
+        e.preventDefault();
+        self.transitToState('momentum_activated');
+      });
     };
     this.init = function(){
-        this.bindListener();
+      this.transitToState('default');
+      this.bindListeners();
+      this.bindFirstInputListener();
+      this.bindLinkIfYouHaveCvv();
     };
 };
 
@@ -257,12 +226,18 @@ function DefaultState()
     this.name = 'default';
     this.handle = function(context)
     {
-        // console.log(context);debugger;
-        context['card_holder'].prop('required', false);
+      context['self'].removeValidationRule();
+      context['card_number_4'].prop('disabled', true).val('').hide();
+      context['card_holder'].prop('disabled', false).prop('required', true);
+      context['card_cvv'].val('');
+      context['wrapper'].find('.card_owner').show();
+      context['wrapper'].find('.card_cvv').show();
+      context['wrapper'].find('#if_you_have_cvv').hide();
+      context['wrapper'].find('#card_holder_not_required').hide();
     };
     this.getName = function()
     {
-       return this.name;
+      return this.name;
     }
 };
 function MomentumActivatedState()
@@ -270,8 +245,15 @@ function MomentumActivatedState()
     this.name = 'momentum_activated';
     this.handle = function(context)
     {
-        // console.log(context);debugger;
-        context['card_holder'].prop('required', false);
+      context['self'].prepareValidationRule();
+      context['self'].addValidationRule();
+      context['wrapper'].find('.card_owner').show();
+      context['card_holder'].prop('required', false).prop('disabled', false);
+      context['card_number_4'].prop('disabled', false).show();
+      context['wrapper'].find('#card_holder_not_required').removeAttr('hidden').show();
+      context['wrapper'].find('.card_cvv').show();
+      context['card_cvv'].val('');
+      context['wrapper'].find('#if_you_have_cvv').hide();
     }
 };
 function MomentumFilledState()
@@ -279,7 +261,10 @@ function MomentumFilledState()
     this.name = 'momentum_filled';
     this.handle = function(context)
     {
-        // console.log(context);debugger;
-        context['card_holder'].prop('required', false);
-    }
+      context['card_holder'].prop('disabled', true).val('');
+      context['card_cvv'].val('123');
+      context['wrapper'].find('.card_owner').hide();
+      context['wrapper'].find('.card_cvv').hide();
+      context['wrapper'].find('#if_you_have_cvv').show();
+    };
 };

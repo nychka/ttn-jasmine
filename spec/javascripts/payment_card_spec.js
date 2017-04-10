@@ -221,11 +221,15 @@ describe("PaymentCard", function(){
             var card = new PaymentCard();
             expect(card.cardInputWrapper).toExist();
         });
-        it('')
-        it('::getNumberInputs()', function(){
+        it('::getNumberInputs', function(){
             loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
-            expect(card.getNumberInputs().length).toEqual(5);
+            expect(card.getNumberInputs().length).toEqual(20);
+        });
+        it('::getActiveNumberInputs()', function(){
+            loadFixtures('maestro_momentum.html');
+            var card = new PaymentCard();
+            expect(card.getActiveNumberInputs().length).toEqual(5);
         });
         it('::getCount() with 0', function(){
             loadFixtures('maestro_momentum.html');
@@ -280,52 +284,8 @@ describe("PaymentCard", function(){
         it('::getWrapper', function(){
             loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
-            var wrapper = $('.card_data:visible');
+            var wrapper = $('.card_data');
             expect(card.getWrapper()).toEqual(wrapper);
-        });
-        describe('::switchWrapper', function(){
-            it('change current card block', function(){
-                loadFixtures('maestro_momentum.html');
-                var card = new PaymentCard();
-                var active_block = $('#aircompany0_block .card_data:visible');
-                var disabled_block = $('#aircompany1_block .card_data:hidden');
-
-                expect(disabled_block).toBeInDOM();
-                expect(card.getWrapper()).toEqual(active_block);
-                expect(card.switchWrapper(disabled_block));
-                expect(card.getWrapper()).toEqual(disabled_block);
-            });
-            it('trigger first input with maestro numbers into default state', function(){
-                loadFixtures('maestro_momentum.html');
-                var card = new PaymentCard();
-                var active_block = $('#aircompany0_block .card_data:visible');
-                var disabled_block = $('#aircompany1_block .card_data:hidden');
-                var card_number = active_block.find('#card_number_0');
-                card_number.val('5168').trigger('keyup');
-
-                expect(card.getWrapper()).toEqual(active_block);
-                expect(card.getCount()).toEqual(4);
-                expect(card.getCurrentState().getName()).toEqual('default');
-            });
-            it('active card block transits to previous card block state', function(){
-                loadFixtures('maestro_momentum.html');
-                var card = new PaymentCard();
-                card.bindFirstInputListener();
-                var previous_block = $('#aircompany0_block .card_data:visible');
-                var current_block = $('#aircompany1_block .card_data:hidden');
-                var card_number = previous_block.find('#card_number_0');
-                card_number.val('6311').trigger('keyup');
-                var previous_state = card.getCurrentState();
-                expect(previous_state.name).toEqual('momentum_activated');
-
-                card.switchWrapper(current_block);
-                var current_state = card.getCurrentState();
-                expect(card.getWrapper()).toEqual(current_block);
-                expect(current_state.name).toEqual('momentum_activated');
-                var card_number = current_block.find('#card_number_0');
-                card_number.val('5168').trigger('keyup');
-                expect(card.getCurrentState().name).toEqual('default');
-            });
         });
         it('::bindFirstNumberListener', function(){
             loadFixtures('maestro_momentum.html');
@@ -348,8 +308,10 @@ describe("PaymentCard", function(){
             var card = new PaymentCard();
             var active_block = card.getWrapper();
             var inputs = active_block.find('.card_input');
+            var card_blocks = card.getCardBlocks();
             var context = {
-                'card_block':       active_block,
+                'self':             card,
+                'wrapper':       active_block,
                 'card_number_0':    active_block.find('#card_number_0'),
                 'card_number_1':    active_block.find('#card_number_1'),
                 'card_number_2':    active_block.find('#card_number_2'),
@@ -360,7 +322,7 @@ describe("PaymentCard", function(){
                 'card_holder':      active_block.find('#card_holder'),
                 'card_cvv':         active_block.find('#card_cvv')
             };
-            expect(inputs.length).toEqual(9);
+            expect(inputs.length).toEqual(9 * card_blocks.length);
             expect(card.getContext()).toEqual(context);
         });
         it('::getCurrentState', function(){
@@ -399,7 +361,7 @@ describe("PaymentCard", function(){
                 loadFixtures('maestro_momentum.html');
                 var card = new PaymentCard();
                 var context = card.getContext();
-                var state = new DefaultState();
+                var state = card.getState('momentum_activated');
 
                 expect(context.card_holder.prop('required')).toBeTruthy();
                 state.handle(context);
@@ -415,7 +377,7 @@ describe("PaymentCard", function(){
             it('when enters 18 signs form is valid according to Luhn\'s algorythm', function(){
                 loadFixtures('maestro_momentum.html');
                     var card = new PaymentCard();
-                    card.whenActive();
+                    card.transitToState('momentum_activated');
                     var form = $('form');
                     var form_validator = form.validate();
                     var first  = $('#card_number_0'),
@@ -447,7 +409,7 @@ describe("PaymentCard", function(){
             it('when enters 18 signs form is not valid: violates Luhn algorythm', function(){
                 loadFixtures('maestro_momentum.html');
                     var card = new PaymentCard();
-                    card.whenActive();
+                    card.transitToState('momentum_activated');
                     var form = $('form');
                     var form_validator = form.validate();
                     var first  = $('#card_number_0'),
@@ -478,7 +440,7 @@ describe("PaymentCard", function(){
             it('form is not valid when enters only 2 digits', function(){
                 loadFixtures('maestro_momentum.html');
                     var card = new PaymentCard();
-                    card.whenActive();
+                    card.transitToState('momentum_activated');
                     var form = $('form');
                     var form_validator = form.validate();
                     var first  = $('#card_number_0'),
@@ -507,19 +469,13 @@ describe("PaymentCard", function(){
             it('appends additional input with XX placeholder', function(){
                 loadFixtures('maestro_momentum.html');
                 var card = new PaymentCard();
-                card.whenActive();
+                card.transitToState('momentum_activated');
                 expect($('#card_number_4')).toExist();
-            });
-            it('additional input is visible', function(){
-                loadFixtures('maestro_momentum.html');
-                var card = new PaymentCard();
-                card.whenActive();
-                expect(card.getAdditionalInput()).toBeVisible();
             });
             it('card holder not required', function(){
                 loadFixtures('maestro_momentum.html');
                 var card = new PaymentCard();
-                card.whenActive();
+                card.transitToState('momentum_activated');
                 var card_holder = $('#card_holder');
                 expect(card_holder).not.toHaveAttr('required');
                 expect(card_holder.valid()).toBeTruthy();
@@ -529,7 +485,7 @@ describe("PaymentCard", function(){
             it('adds validation rule for first input', function(){
                 loadFixtures('maestro_momentum.html');
                 var card = new PaymentCard();
-                card.whenActive();
+                card.transitToState('momentum_activated');
                 var first_input = card.getFirstInput();
                 expect(first_input).toHaveClass('valid_card_number_maestro_momentum');
                 // expect(first_input).not.toHaveClass('valid_card_number');
@@ -539,7 +495,7 @@ describe("PaymentCard", function(){
                 it('all inputs are active', function(){
                     loadFixtures('maestro_momentum.html');
                     var card = new PaymentCard();
-                    card.whenActive();
+                    card.transitToState('momentum_activated');
                     var form = $('form');
                     var form_validator = form.validate();
                     var first  = $('#card_number_0'),
@@ -579,7 +535,7 @@ describe("PaymentCard", function(){
                 it('cvv is required and link #if_you_have_cvv is hidden', function(){
                     loadFixtures('maestro_momentum.html');
                     var card = new PaymentCard();
-                    card.whenActive();
+                    card.transitToState('momentum_activated');
                     var form = $('form');
                     var form_validator = form.validate();
                     var first  = $('#card_number_0'),
@@ -611,7 +567,7 @@ describe("PaymentCard", function(){
                 it('card holder is not required and label #card_holder_not_required is visible', function(){
                     loadFixtures('maestro_momentum.html');
                     var card = new PaymentCard();
-                    card.whenActive();
+                    card.transitToState('momentum_activated');
                     var form = $('form');
                     var form_validator = form.validate();
                     var first  = $('#card_number_0'),
@@ -642,7 +598,7 @@ describe("PaymentCard", function(){
                 it('first input has class .valid_card_number_maestro_momentum', function(){
                     loadFixtures('maestro_momentum.html');
                     var card = new PaymentCard();
-                    card.whenActive();
+                    card.transitToState('momentum_activated');
                     var form = $('form');
                     var form_validator = form.validate();
                     var first  = $('#card_number_0'),
@@ -678,39 +634,30 @@ describe("PaymentCard", function(){
            it('card holder is required', function(){
                loadFixtures('maestro_momentum.html');
                var card = new PaymentCard();
-               card.whenUnactive();
+               card.transitToState('default');
                expect($('#card_holder')).toHaveAttr('required');
            });
             it('card holder text is hidden', function(){
                 loadFixtures('maestro_momentum.html');
                 var card = new PaymentCard();
-                card.whenUnactive();
+                card.transitToState('default');
                 expect($('#card_holder_not_required')).not.toBeVisible();
             });
             it('removes validation rule from first input', function(){
                 loadFixtures('maestro_momentum.html');
                 var card = new PaymentCard();
-                card.whenUnactive();
+                card.transitToState('default');
                 expect($('#card_number_0')).not.toHaveClass('valid_card_number_maestro_momentum');
                 expect($('#card_number_0')).toHaveClass('valid_card_number');
                 expect($('#card_number_0')).toHaveClass('valid_card_number_visa_master');
             });
-            it('hides additional card number input', function(){
-                loadFixtures('maestro_momentum.html');
-                var card = new PaymentCard();
-                card.whenActive();
-                card.whenUnactive();
-                var input = card.getAdditionalInput();
-                expect(input).toBeInDOM();
-                expect(input).not.toBeVisible();
-            });
             it('clears additional card number input value', function(){
                 loadFixtures('maestro_momentum.html');
                 var card = new PaymentCard();
-                card.whenActive();
-                var input = card.getAdditionalInput();
+                card.transitToState('momentum_activated');
+                var input = card.getContext()['card_number_4'];
                 input.val('foo');
-                card.whenUnactive();
+                card.transitToState('default');
                 expect(input).toBeInDOM();
                 expect(input).not.toBeVisible();
                 expect(input).toHaveValue('');
@@ -734,8 +681,6 @@ describe("PaymentCard", function(){
                 active_first.val('63').trigger('keyup');
                 expect(active_first).toHaveClass('valid_card_number_maestro_momentum');
 
-                card.switchWrapper(disabled);
-                expect(card.getWrapper()).toEqual(disabled);
                 disabled_first.val('63').trigger('keyup');
                 expect(disabled_first).toHaveClass('valid_card_number_maestro_momentum');
             });
@@ -763,8 +708,6 @@ describe("PaymentCard", function(){
                 active_first.trigger('keyup');
                 expect(active.find('.card_owner')).not.toBeVisible();
                
-                card.switchWrapper(disabled);
-                expect(card.getWrapper()).toEqual(disabled);
                 disabled_first.val('63').trigger('keyup');
                 expect(disabled_first).toHaveClass('valid_card_number_maestro_momentum');
                 disabled.find('#card_number_0').val('6311');
@@ -775,7 +718,6 @@ describe("PaymentCard", function(){
                 disabled.find('#card_holder').val('Cardholder');
                 expect(card.getCount()).toEqual(18);
                 var card_holder = disabled.find('#card_holder');
-                expect(card_holder.prop('disabled')).toBeFalsy();
                 expect(card_holder.val()).toEqual('Cardholder');
                 disabled_first.trigger('keyup');
                 expect(card_holder.val()).toEqual('');

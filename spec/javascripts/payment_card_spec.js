@@ -373,6 +373,217 @@ describe("PaymentCard", function(){
                 expect(state.getName()).toEqual('default');
             });
         });
+        describe('State Contexts', function(){
+            beforeEach(function(){
+                loadFixtures('maestro_momentum.html');
+                this.card = new PaymentCard();
+            });
+            describe('Default', function(){
+                beforeEach(function(){
+                    this.card.transitToState('default');
+                    this.context = this.card.getContext();
+                });
+                describe('card_number_0: first input', function(){
+                    it('has rule: valid_card_number - for validation plugin', function(){
+                        expect(this.context.card_number_0).toHaveClass('valid_card_number');
+                    });
+                    it('has rule: valid_card_number - for validation plugin', function(){
+                        expect(this.context.card_number_0).toHaveClass('valid_card_number_visa_master');
+                    });
+                    it('has not rule: valid_card_number_maestro_momentum - for validation plugin', function(){
+                        expect(this.context.card_number_0).not.toHaveClass('valid_card_number_maestro_momentum');
+                    });
+                });
+                describe('card_number_4: extra input', function(){
+                    it('is hidden', function(){
+                        expect(this.context.card_number_4).not.toBeVisible();
+                    });
+                    it('is disabled', function(){
+                        expect(this.context.card_number_4).toHaveAttr('disabled');
+                    });
+                    it('is empty', function(){
+                        expect(this.context.card_number_4.val()).toEqual('');
+                    });
+                });
+                describe('card_holder', function(){
+                    it('is required', function(){
+                        expect(this.context.card_holder).toHaveAttr('required');
+                        expect(this.context.card_holder.prop('required')).toBeTruthy();
+                    });
+                    it('is visible', function(){
+                        expect(this.context.card_holder).toBeVisible();
+                    });
+                    it('is not disabled', function(){
+                        expect(this.context.card_holder).not.toHaveAttr('disabled');
+                        expect(this.context.card_holder.prop('disabled')).toBeFalsy();
+                    });
+                });
+                describe('card_cvv', function(){
+                    it('is required', function(){
+                        expect(this.context.card_cvv).toHaveAttr('required');
+                        expect(this.context.card_cvv.prop('required')).toBeTruthy();
+                    });
+                    it('is visible', function(){
+                        expect(this.context.card_cvv).toBeVisible();
+                    });
+                    it('is not disabled', function(){
+                        expect(this.context.card_cvv).not.toHaveAttr('disabled');
+                        expect(this.context.card_cvv.prop('disabled')).toBeFalsy();
+                    });
+                });
+                describe('card cvv wrapper - .card_owner', function(){
+                    it('is visible', function(){
+                        expect(this.context.wrapper.find('.card_owner')).toBeVisible();
+                    });
+                });
+                describe('link #if_you_have_cvv', function(){
+                    it('is hidden', function(){
+                        expect(this.context.wrapper.find('#if_you_have_cvv')).not.toBeVisible();
+                    });
+                });
+                describe('card holder label #card_holder_not_required', function(){
+                    it('is hidden', function(){
+                        expect(this.context.wrapper.find('#card_holder_not_required')).not.toBeVisible();
+                    });
+                });
+            });
+            describe('Momentum Activated', function(){
+                beforeEach(function(){
+                    this.card.transitToState('momentum_activated');
+                    this.context = this.card.getContext();
+                });
+                describe('card_number_0: first input', function(){
+                    it('has rule: valid_card_number - for validation plugin', function(){
+                        expect(this.context.card_number_0).toHaveClass('valid_card_number');
+                    });
+                    it('has rule: valid_card_number - for validation plugin', function(){
+                        expect(this.context.card_number_0).not.toHaveClass('valid_card_number_visa_master');
+                    });
+                    it('has not rule: valid_card_number_maestro_momentum - for validation plugin', function(){
+                        expect(this.context.card_number_0).toHaveClass('valid_card_number_maestro_momentum');
+                    });
+                });
+                describe('card_number_4: extra input', function(){
+                    it('is visible', function(){
+                        expect(this.context.card_number_4).toBeVisible();
+                    });
+                    it('is not disabled', function(){
+                        expect(this.context.card_number_4).not.toHaveAttr('disabled');
+                    });
+                });
+                describe('card_holder', function(){
+                    it('is not required', function(){
+                        expect(this.context.card_holder).not.toHaveAttr('required');
+                        expect(this.context.card_holder.prop('required')).toBeFalsy();
+                    });
+                    it('is visible', function(){
+                        expect(this.context.card_holder).toBeVisible();
+                    });
+                    it('is not disabled', function(){
+                        expect(this.context.card_holder).not.toHaveAttr('disabled');
+                        expect(this.context.card_holder.prop('disabled')).toBeFalsy();
+                    });
+                });
+                describe('card_cvv', function(){
+                    it('is required', function(){
+                        expect(this.context.card_cvv).toHaveAttr('required');
+                        expect(this.context.card_cvv.prop('required')).toBeTruthy();
+                    });
+                    it('is visible', function(){
+                        expect(this.context.card_cvv).toBeVisible();
+                    });
+                    it('is not disabled', function(){
+                        expect(this.context.card_cvv).not.toHaveAttr('disabled');
+                        expect(this.context.card_cvv.prop('disabled')).toBeFalsy();
+                    });
+                });
+                describe('card cvv wrapper - .card_owner', function(){
+                    it('is visible', function(){
+                        expect(this.context.wrapper.find('.card_owner')).toBeVisible();
+                    });
+                });
+                describe('link #if_you_have_cvv', function(){
+                    it('is hidden', function(){
+                        expect(this.context.wrapper.find('#if_you_have_cvv')).not.toBeVisible();
+                    });
+                });
+                describe('card holder label #card_holder_not_required', function(){
+                    it('is visible', function(){
+                        expect(this.context.wrapper.find('#card_holder_not_required')).toBeVisible();
+                    });
+                });
+            });
+            describe('Momentum Filled', function(){
+                beforeEach(function(){
+                    this.card.transitToState('momentum_activated');
+                    this.card.transitToState('momentum_filled');
+                    this.context = this.card.getContext();
+                });
+                describe('card_number_0: first input', function(){
+                    it('has rule: valid_card_number - for validation plugin', function(){
+                        expect(this.context.card_number_0).toHaveClass('valid_card_number');
+                    });
+                    it('has rule: valid_card_number - for validation plugin', function(){
+                        expect(this.context.card_number_0).not.toHaveClass('valid_card_number_visa_master');
+                    });
+                    it('has not rule: valid_card_number_maestro_momentum - for validation plugin', function(){
+                        expect(this.context.card_number_0).toHaveClass('valid_card_number_maestro_momentum');
+                    });
+                });
+                describe('card_number_4: extra input', function(){
+                    it('is visible', function(){
+                        expect(this.context.card_number_4).toBeVisible();
+                    });
+                    it('is not disabled', function(){
+                        expect(this.context.card_number_4).not.toHaveAttr('disabled');
+                    });
+                });
+                describe('card_holder', function(){
+                    it('is hidden', function(){
+                        expect(this.context.card_holder).not.toBeVisible();
+                    });
+                    it('is not disabled', function(){
+                        expect(this.context.card_holder).not.toHaveAttr('disabled');
+                        expect(this.context.card_holder.prop('disabled')).toBeFalsy();
+                    });
+                    it('has empty value', function(){
+                        expect(this.context.card_holder.val()).toEqual('');
+                    });
+                });
+                describe('card_cvv', function(){
+                    it('is required', function(){
+                        expect(this.context.card_cvv).toHaveAttr('required');
+                        expect(this.context.card_cvv.prop('required')).toBeTruthy();
+                    });
+                    it('is hidden', function(){
+                        expect(this.context.card_cvv).not.toBeVisible();
+                    });
+                    it('is not disabled', function(){
+                        expect(this.context.card_cvv).not.toHaveAttr('disabled');
+                        expect(this.context.card_cvv.prop('disabled')).toBeFalsy();
+                    });
+                    it('is not empty', function(){
+                        expect(this.context.card_cvv.val()).not.toEqual('');
+                        expect(this.context.card_cvv.val()).toEqual('123');
+                    });
+                });
+                describe('card cvv wrapper - .card_owner', function(){
+                    it('is hidden', function(){
+                        expect(this.context.wrapper.find('.card_owner')).not.toBeVisible();
+                    });
+                });
+                describe('link #if_you_have_cvv', function(){
+                    it('is visible', function(){
+                        expect(this.context.wrapper.find('#if_you_have_cvv')).toBeVisible();
+                    });
+                });
+                describe('card holder label #card_holder_not_required', function(){
+                    it('is hidden', function(){
+                        expect(this.context.wrapper.find('#card_holder_not_required')).not.toBeVisible();
+                    });
+                });
+            });
+        });
         describe('when active', function(){
             it('when enters 18 signs form is valid according to Luhn\'s algorythm', function(){
                 loadFixtures('maestro_momentum.html');
@@ -721,7 +932,7 @@ describe("PaymentCard", function(){
                 expect(card_holder.val()).toEqual('Cardholder');
                 disabled_first.trigger('keyup');
                 expect(card_holder.val()).toEqual('');
-                expect(card_holder.prop('disabled')).toBeTruthy();
+                expect(card_holder).not.toBeVisible();
             });
         });
     });

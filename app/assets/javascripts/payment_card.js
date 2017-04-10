@@ -228,7 +228,7 @@ function DefaultState()
     {
       context['self'].removeValidationRule();
       context['card_number_4'].prop('disabled', true).val('').hide();
-      context['card_holder'].prop('disabled', false).prop('required', true);
+      context['card_holder'].prop('required', true);
       context['card_cvv'].val('');
       context['wrapper'].find('.card_owner').show();
       context['wrapper'].find('.card_cvv').show();
@@ -248,7 +248,7 @@ function MomentumActivatedState()
       context['self'].prepareValidationRule();
       context['self'].addValidationRule();
       context['wrapper'].find('.card_owner').show();
-      context['card_holder'].prop('required', false).prop('disabled', false);
+      context['card_holder'].prop('required', false);
       context['card_number_4'].prop('disabled', false).show();
       context['wrapper'].find('#card_holder_not_required').removeAttr('hidden').show();
       context['wrapper'].find('.card_cvv').show();
@@ -261,7 +261,7 @@ function MomentumFilledState()
     this.name = 'momentum_filled';
     this.handle = function(context)
     {
-      context['card_holder'].prop('disabled', true).val('');
+      context['card_holder'].val('');
       context['card_cvv'].val('123');
       context['wrapper'].find('.card_owner').hide();
       context['wrapper'].find('.card_cvv').hide();

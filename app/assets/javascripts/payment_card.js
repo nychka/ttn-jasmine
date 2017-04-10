@@ -2,11 +2,12 @@ function PaymentCard(){
     this.active = false;
     this.momentum_nums = [63, 66, 67, 68, 69];
     this.validationRule = 'valid_card_number_maestro_momentum';
-    this.wrapper = $('.card_data:visible');
-    this.cardInputWrapper = $('.card-num-wrapper:visible');
+    this.cardInputWrapper = '.card-num-wrapper';
+    this.firstInputSelector = '#card_number_0';
 
     this.getNumberInputs = function(){
-        var numbers = this.wrapper.find('.card_num input:visible');
+        var wrapper = this.getWrapper();
+        var numbers = wrapper.find(this.cardInputWrapper + ' input');
         return numbers;
     };
     this.getCount = function(){
@@ -19,10 +20,11 @@ function PaymentCard(){
 
         return count;
     };
-    this.bindListener = function(){
+    this.bindListeners = function(){
         var self = this;
-        var numbers = this.getNumberInputs();
-
+        var numbers = $(this.cardInputWrapper + ' input');//this.getNumberInputs();
+        // var numbers = this.getNumberInputs();
+        console.assert(20, numbers.length);
         numbers.each(function(i, number){
             $(number).on('keyup', function(e){
                 self.operate(e);
@@ -61,114 +63,75 @@ function PaymentCard(){
     this.operate = function(e){
         var self = this;
         var count = this.getCount();
-        var firstInput = this.getFirstInput();
-
-        firstInput.on('keyup', function(e){
-            var active = self.numberStarts(e.target.value);
-            self.setActive(active);
-
-            if(active){
-                self.whenActive();
-            }else{
-                self.whenUnactive();
-            }
-        });
+        var wrapper = this.getWrapper();
 
         if(this.getCount() === 18){
-            // console.log('interesting things coming)))...');
-            $('.card_owner').hide();
-            this.disableInput($('#card_holder'));
-            $('.card_cvv').hide();
-            this.disableInput($('#card_cvv'));
-            $('#if_you_have_cvv')
+            console.log('interesting things coming)))...');
+            wrapper.find('.card_owner').hide();
+            this.disableInput(wrapper.find('#card_holder'));
+            wrapper.find('.card_cvv').hide();
+            this.disableInput(wrapper.find('#card_cvv'));
+            wrapper.find('#if_you_have_cvv')
                 .removeAttr('disabled')
                 .show()
                 .off().on('click', function(e){
                 e.preventDefault();
-                self.enableInput($('#card_cvv'));
-                $('.card_cvv').show();
-                $('#if_you_have_cvv').hide();
+                self.enableInput(wrapper.find('#card_cvv'));
+                wrapper.find('.card_cvv').show();
+                wrapper.find('#if_you_have_cvv').hide();
             });
         }else{
             // console.log('it is boring..(((');
-            if($('.card_owner').is(':hidden')){
-                this.enableInput($('#card_holder'));
-                this.enableInput($('#card-cvv'));
-                $('.card_owner').show();
-                $('.card_cvv').show();
-                $('#if_you_have_cvv').hide();
+            if(wrapper.find('.card_owner').is(':hidden')){
+                this.enableInput(wrapper.find('#card_holder'));
+                this.enableInput(wrapper.find('#card-cvv'));
+                wrapper.find('.card_owner').show();
+                wrapper.find('.card_cvv').show();
+                wrapper.find('#if_you_have_cvv').hide();
             }
         }
     };
+    this.bindFirstInputListener = function(){
+        var self = this;
+        var firstInput = $(this.cardInputWrapper + ' ' + this.firstInputSelector);
+        
+        firstInput.on('keyup', function(e){
+            var active = self.numberStarts(e.target.value);
+            self.setActive(active);
+            
+            if(active){
+               console.log('----active first');
+                self.whenActive();
+                self.transitToState('momentum_activated');
+            }else{
+                console.log('----not active first');
+                self.whenUnactive();
+                self.transitToState('default');
+            }
+        });
+    };
     this.getAdditionalInput = function(){
-        var id = '#'+ this.additionalCardNumberId;
-        return this.wrapper.find(id);
+        var wrapper = this.getWrapper();
+        return wrapper.find('#card_number_4');
     };
     this.whenUnactive = function(){
-        if(this.hasAdditionalInput()){
-            this.getAdditionalInput().hide().val('').prop('disabled', true);
-        }
         this.removeValidationRule();
+        var wrapper = this.getWrapper();
+        wrapper.find('#card_number_4').prop('disabled', true).hide().val('');
         $('#card_holder_not_required').hide();
         $('#card_holder').attr('required', 'required');
     };
     this.whenActive = function(){
-        if(!this.hasAdditionalInput()){
-            var input = this.addNumberInput();
-            this.cardInputWrapper.append(input);
-            this.additionalInput = input;
-            this.fixTabIndex();
-            this.prepareValidationRule();
-        }else{
-            if(this.getAdditionalInput().is(':hidden')){
-                this.getAdditionalInput().show().prop('disabled', false);
-            }
-        }
+        this.prepareValidationRule();
         this.addValidationRule();
+        var wrapper = this.getWrapper();
+        wrapper.find('#card_number_4').prop('disabled', false).show();
         $('#card_holder').removeAttr('required');
         $('#card_holder_not_required').removeAttr('hidden').show();
-    };
-    this.hasAdditionalInput = function(){
-        return (typeof this.additionalInput === 'object');
-    };
-    this.fixTabIndex = function(){
-        var numbers = this.getNumberInputs();
-        var lastIndex = parseInt(numbers.last().attr('tabindex'));
-
-        numbers.each(function(i, number){
-            number = $(number);
-            var index = parseInt(number.attr('tabindex'));
-            index -= 1;
-            number.attr('tabindex', index);
-            number.prop('tabindex', index);
-        });
-    };
-    this.addNumberInput = function(){
-        var numbers = this.getNumberInputs();
-        var input = numbers.last().clone(true);
-
-        var tabindex = parseInt(input.attr('tabindex')) + 1;
-        var id = input.attr('id').match(/\d$/).shift();
-        id = parseInt(id) + 1;
-        var name = 'card_number[' + id + ']';
-        this.additionalCardNumberId = 'card_number_' + id;
-
-        var attrs = {
-            id: this.additionalCardNumberId,
-            'data-length': 2,
-            maxlength: 2,
-            name: name,
-            placeholder: 'XX',
-            tabindex: tabindex
-        };
-        input.attr(attrs);
-
-        return input;
     };
     this.addValidationRule = function(){
         this.getFirstInput()
             .addClass(this.validationRule)
-            //.removeClass('valid_card_number');
             .removeClass('valid_card_number_visa_master');
     };
     this.removeValidationRule = function(){
@@ -242,6 +205,7 @@ function PaymentCard(){
             'card_number_1':    wrapper.find('#card_number_1'),
             'card_number_2':    wrapper.find('#card_number_2'),
             'card_number_3':    wrapper.find('#card_number_3'),
+            'card_number_4':    wrapper.find('#card_number_4'),
             'card_date_month':  wrapper.find('#card_date_month'),
             'card_date_year':   wrapper.find('#card_date_year'),
             'card_holder':      wrapper.find('#card_holder'),

@@ -14,6 +14,16 @@ describe("PaymentCard", function(){
         var blocks = $('.way_description_block_aircompany .card_num');
         expect(blocks.length).toEqual(4);
     });
+    it('has additional input on each card block', function(){
+        loadFixtures('maestro_momentum.html');
+        var blocks = $('.card_num #card_number_4');
+        expect(blocks.length).toEqual(4);
+    });
+    it('additional input is disabled by default', function(){
+        loadFixtures('maestro_momentum.html');
+        var input = $('#card_number_4');
+        expect(input.prop('disabled')).toBeTruthy();
+    });
     describe('Default Validation', function(){
         it('form is not valid cardholder, month, year and cvv are empty', function(){
             loadFixtures('maestro_momentum.html');
@@ -204,17 +214,18 @@ describe("PaymentCard", function(){
         it('checks card wrapper', function(){
             loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
-            expect(card.wrapper).toExist();
+            expect(card.getWrapper()).toExist();
         });
         it('checks card input wrapper', function(){
             loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             expect(card.cardInputWrapper).toExist();
         });
+        it('')
         it('::getNumberInputs()', function(){
             loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
-            expect(card.getNumberInputs().length).toEqual(4);
+            expect(card.getNumberInputs().length).toEqual(5);
         });
         it('::getCount() with 0', function(){
             loadFixtures('maestro_momentum.html');
@@ -231,18 +242,6 @@ describe("PaymentCard", function(){
             loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
             expect(card.numberStarts('63')).toBeTruthy();
-        });
-        it('::hasAdditionalInput() when is not active', function(){
-            loadFixtures('maestro_momentum.html');
-            var card = new PaymentCard();
-            expect(card.hasAdditionalInput()).toBeFalsy();
-        });
-        it('::addNumberInput', function(){
-            loadFixtures('maestro_momentum.html');
-            var card = new PaymentCard();
-            var input = card.addNumberInput();
-            expect(input).toHaveId('card_number_4');
-            expect($('#card_number_4')).not.toExist();
         });
         it('::numberStarts() with 63', function(){
             loadFixtures('maestro_momentum.html');
@@ -284,16 +283,65 @@ describe("PaymentCard", function(){
             var wrapper = $('.card_data:visible');
             expect(card.getWrapper()).toEqual(wrapper);
         });
-        it('::switchWrapper', function(){
+        describe('::switchWrapper', function(){
+            it('change current card block', function(){
+                loadFixtures('maestro_momentum.html');
+                var card = new PaymentCard();
+                var active_block = $('#aircompany0_block .card_data:visible');
+                var disabled_block = $('#aircompany1_block .card_data:hidden');
+
+                expect(disabled_block).toBeInDOM();
+                expect(card.getWrapper()).toEqual(active_block);
+                expect(card.switchWrapper(disabled_block));
+                expect(card.getWrapper()).toEqual(disabled_block);
+            });
+            it('trigger first input with maestro numbers into default state', function(){
+                loadFixtures('maestro_momentum.html');
+                var card = new PaymentCard();
+                var active_block = $('#aircompany0_block .card_data:visible');
+                var disabled_block = $('#aircompany1_block .card_data:hidden');
+                var card_number = active_block.find('#card_number_0');
+                card_number.val('5168').trigger('keyup');
+
+                expect(card.getWrapper()).toEqual(active_block);
+                expect(card.getCount()).toEqual(4);
+                expect(card.getCurrentState().getName()).toEqual('default');
+            });
+            it('active card block transits to previous card block state', function(){
+                loadFixtures('maestro_momentum.html');
+                var card = new PaymentCard();
+                card.bindFirstInputListener();
+                var previous_block = $('#aircompany0_block .card_data:visible');
+                var current_block = $('#aircompany1_block .card_data:hidden');
+                var card_number = previous_block.find('#card_number_0');
+                card_number.val('6311').trigger('keyup');
+                var previous_state = card.getCurrentState();
+                expect(previous_state.name).toEqual('momentum_activated');
+
+                card.switchWrapper(current_block);
+                var current_state = card.getCurrentState();
+                expect(card.getWrapper()).toEqual(current_block);
+                expect(current_state.name).toEqual('momentum_activated');
+                var card_number = current_block.find('#card_number_0');
+                card_number.val('5168').trigger('keyup');
+                expect(card.getCurrentState().name).toEqual('default');
+            });
+        });
+        it('::bindFirstNumberListener', function(){
             loadFixtures('maestro_momentum.html');
             var card = new PaymentCard();
-            var active_block = $('#aircompany0_block .card_data:visible');
-            var disabled_block = $('#aircompany1_block .card_data:hidden');
+            var card_number = card.getFirstInput();
+            card.bindFirstInputListener();
+            card_number.val('63').trigger('keyup');
+            var current_state = card.getCurrentState();
 
-            expect(disabled_block).toBeInDOM();
-            expect(card.getWrapper()).toEqual(active_block);
-            expect(card.switchWrapper(disabled_block));
-            expect(card.getWrapper()).toEqual(disabled_block);
+            expect(card.getCount()).toEqual(2);
+            expect(current_state.name).toEqual('momentum_activated');
+
+            card_number.val('51').trigger('keyup');
+            var current_state = card.getCurrentState();
+
+            expect(current_state.name).toEqual('default');
         });
          it('::getContext', function(){
             loadFixtures('maestro_momentum.html');
@@ -306,12 +354,13 @@ describe("PaymentCard", function(){
                 'card_number_1':    active_block.find('#card_number_1'),
                 'card_number_2':    active_block.find('#card_number_2'),
                 'card_number_3':    active_block.find('#card_number_3'),
+                'card_number_4':    active_block.find('#card_number_4'),
                 'card_date_month':  active_block.find('#card_date_month'),
                 'card_date_year':   active_block.find('#card_date_year'),
                 'card_holder':      active_block.find('#card_holder'),
                 'card_cvv':         active_block.find('#card_cvv')
             };
-            expect(inputs.length).toEqual(8);
+            expect(inputs.length).toEqual(9);
             expect(card.getContext()).toEqual(context);
         });
         it('::getCurrentState', function(){
@@ -392,6 +441,7 @@ describe("PaymentCard", function(){
 
                     expect(card.getCount()).toEqual(18);
                     expect(first).toHaveClass('valid_card_number');
+                    expect(card.passLuhnAlgorythm('6368 7572 5168 9718 56'));
                     expect(form.valid()).toBeTruthy();
             });
             it('when enters 18 signs form is not valid: violates Luhn algorythm', function(){
@@ -460,11 +510,11 @@ describe("PaymentCard", function(){
                 card.whenActive();
                 expect($('#card_number_4')).toExist();
             });
-            it('has additional input', function(){
+            it('additional input is visible', function(){
                 loadFixtures('maestro_momentum.html');
                 var card = new PaymentCard();
                 card.whenActive();
-                expect(card.hasAdditionalInput()).toBeTruthy();
+                expect(card.getAdditionalInput()).toBeVisible();
             });
             it('card holder not required', function(){
                 loadFixtures('maestro_momentum.html');
@@ -664,6 +714,72 @@ describe("PaymentCard", function(){
                 expect(input).toBeInDOM();
                 expect(input).not.toBeVisible();
                 expect(input).toHaveValue('');
+            });
+        });
+        describe('MultiBlock', function(){
+            it('bind listeners to all available card blocks', function(){
+                loadFixtures('maestro_momentum.html');
+                var card = new PaymentCard();
+                card.bindFirstInputListener();
+                var card_blocks = card.getCardBlocks();
+                var active = $(card_blocks[0]);
+                var disabled = $(card_blocks[1]);
+                expect(active).toBeVisible();
+                expect(disabled).not.toBeVisible();
+
+                var active_first = active.find('#card_number_0');//debugger;
+                var disabled_first = disabled.find('#card_number_0');
+                expect(active_first).not.toHaveClass('valid_card_number_maestro_momentum');
+                expect(disabled_first).not.toHaveClass('valid_card_number_maestro_momentum');
+                active_first.val('63').trigger('keyup');
+                expect(active_first).toHaveClass('valid_card_number_maestro_momentum');
+
+                card.switchWrapper(disabled);
+                expect(card.getWrapper()).toEqual(disabled);
+                disabled_first.val('63').trigger('keyup');
+                expect(disabled_first).toHaveClass('valid_card_number_maestro_momentum');
+            });
+            it('binds listener for operate', function(){
+                loadFixtures('maestro_momentum.html');
+                var card = new PaymentCard();
+                card.bindFirstInputListener();
+                card.bindListeners();
+                var card_blocks = card.getCardBlocks();
+                var active = $(card_blocks[0]);
+                var disabled = $(card_blocks[1]);
+                expect(active).toBeVisible();
+                expect(disabled).not.toBeVisible();
+
+                var active_first = active.find('#card_number_0');//debugger;
+                var disabled_first = disabled.find('#card_number_0');
+                active.find('#card_number_0').val('6311');
+                active.find('#card_number_1').val('1111');
+                active.find('#card_number_2').val('1111');
+                active.find('#card_number_3').val('1111');
+                active.find('#card_number_4').val('11');
+
+                expect(card.getCount()).toEqual(18);
+                expect(active.find('.card_owner')).toBeVisible();
+                active_first.trigger('keyup');
+                expect(active.find('.card_owner')).not.toBeVisible();
+               
+                card.switchWrapper(disabled);
+                expect(card.getWrapper()).toEqual(disabled);
+                disabled_first.val('63').trigger('keyup');
+                expect(disabled_first).toHaveClass('valid_card_number_maestro_momentum');
+                disabled.find('#card_number_0').val('6311');
+                disabled.find('#card_number_1').val('1111');
+                disabled.find('#card_number_2').val('1111');
+                disabled.find('#card_number_3').val('1111');
+                disabled.find('#card_number_4').val('11');
+                disabled.find('#card_holder').val('Cardholder');
+                expect(card.getCount()).toEqual(18);
+                var card_holder = disabled.find('#card_holder');
+                expect(card_holder.prop('disabled')).toBeFalsy();
+                expect(card_holder.val()).toEqual('Cardholder');
+                disabled_first.trigger('keyup');
+                expect(card_holder.val()).toEqual('');
+                expect(card_holder.prop('disabled')).toBeTruthy();
             });
         });
     });

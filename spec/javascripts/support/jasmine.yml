@@ -18,6 +18,8 @@ src_files:
   - assets/jasmine-jquery.js
   - assets/credit_card.js
   - assets/payment_card.js
+  - assets/jquery.payment.js
+  - assets/pay_controller.js
 
 
 # stylesheets

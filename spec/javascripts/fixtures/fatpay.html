@@ -1,0 +1,184 @@
+<html>
+<body>
+    <div class="all_pages" data-auto-controller="Payment/payController" data-popup="true">
+      <script type="text/javascript" src="assets/default.js">
+        var js_params = {"redirect_in_popup":0};
+    </script>
+
+
+    <div class="all_pages">
+        <div class="payment_page">
+            <div class="top_block">
+                <div class="logo_panel">
+                    <table>
+                        <tbody><tr>
+                            <td>
+
+                            </td>
+                            <td>
+                                <a href="http://localhost:3000/pay#" class="logo">
+                                    <img alt="Logo" src="./Fatpay.net_files/logo.png">
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody></table>
+                </div>
+                <div class="payment_info">
+                    <div class="full_info">
+                        Тестовая оплата
+                    </div>
+
+                    <div class="total_amount">
+                        Заказ №1491374003
+                        <span>327.78 RUR</span>
+                    </div>
+
+                    <div class="cc"></div>
+                </div>
+            </div>
+            <p class="way_title">Выберите, пожалуйста, способ оплаты</p>
+            <div class="payment_block">
+
+                <input name="session_id" type="hidden" value="3816-796364e1bfe3a2065e3ecbd1443d1e6c8ea04487e846bf2985ed141415df">
+                <ul class="payment_way">
+                  <li class="bank_card active">
+                    <div class="title" pay_id="14"><span class="way_name">Банковская карта</span>
+
+                      <span class="amount">149.59 UAH</span>
+
+                  </div>
+
+
+                  <div class="card_wrapper">
+                   <div class="card_block">
+                    <div class="card_bg">
+                        <form accept-charset="UTF-8" action="http://localhost:3000/ajax/make_payment" class="form-registr profile_form" id="update_attribute" method="post"><div style="margin:0;padding:0;display:inline"><input name="utf8" type="hidden" value="✓"><input name="authenticity_token" type="hidden" value="2MGOFfa8xsQOrVgnXfaztAJZe3cc70yWgVof9A+vEGs="></div>
+                            <div class="card_info">
+                                <div class="rel card_number">
+                                    <div class="field">
+                                        <strong>Номер карты (от 16 до 18 цифр)</strong>
+                                    </div>
+                                    <div class="cc"></div>
+                                    <div class="field">
+                                        <input autocomplete="off" class="number" id="post_card_number_1" maxlength="4" name="post[card_number_1]" size="4" tabindex="1" type="text">
+                                        <!-- <input class="eroor_in" type="text" name="" id="" maxlength="4" /> -->
+                                    </div>
+                                    <div class="field">
+                                        <input autocomplete="off" class="number" id="post_card_number_2" maxlength="4" name="post[card_number_2]" size="4" tabindex="2" type="text">
+                                    </div>
+                                    <div class="field">
+                                        <input autocomplete="off" class="number" id="post_card_number_3" maxlength="4" name="post[card_number_3]" size="4" tabindex="3" type="text">
+                                    </div>
+                                    <div class="field">
+                                        <input autocomplete="off" class="number" id="post_card_number_4" maxlength="4" name="post[card_number_4]" size="4" tabindex="4" type="text">
+                                    </div>
+                                    <div class="field">
+                                        <input autocomplete="off" class="number" id="post_card_number_5" maxlength="4" name="post[card_number_5]" size="4" tabindex="4" type="text">
+                                    </div>
+                                    <div class="errors">
+                                        <span>Введите корректные данные.</span>
+                                        <em class="arrow"></em>
+                                    </div>
+                                    <div class="cc"></div>
+                                </div>
+                                <div class="field term">
+                                    <strong>Срок действия</strong>
+                                </div>
+                                <div class="rel card_expiry">
+                                    <div class="field">
+                                        <span>Месяц</span>
+                                        <input autocomplete="off" class="number" id="post_month" maxlength="2" name="post[month]" size="2" tabindex="5" type="text">
+                                        <!-- <input class="date_in" type="text" name="" id="" maxlength="2" /> -->
+                                    </div>
+                                    <div class="field">
+                                        <span>Год</span>
+                                        <input autocomplete="off" class="number" id="post_year" maxlength="2" name="post[year]" size="2" tabindex="6" type="text">
+                                    </div>
+                                    <div class="errors">
+                                        <span>Введите корректные данные.</span>
+                                        <em class="arrow"></em>
+                                    </div>
+                                    <div class="cc"></div>
+                                </div>
+                                <div class="rel card_owner">
+                                    <div class="field">
+                                        <strong>Имя владельца карты</strong>
+                                        <input autocomplete="off" class="owner_in" id="post_owner" name="post[owner]" tabindex="7" type="text" maxlength="2147483647">
+                                    </div>
+                                    <span id="card_holder_not_required">Если на карте нет имени, оставьте поле пустым</span>
+                                    <div class="errors">
+                                        <span>Введите корректные данные.</span>
+                                        <em class="arrow"></em>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="rel cvv_block">
+                                <div class="magnit_line"></div>
+                                <a href="#" id="if_you_have_cvv" class="if-you-have-cvv" hidden="">Нажмите сюда если у вас есть CVV/CVC</a>
+                                <div class="card_cvv">
+                                    <div class="field cvv_title">
+                                        CVV или CVC - трехзначный код на обратной стороны карты
+                                    </div>
+                                    <div class="field">
+                                        <strong>CVV/CVC</strong>
+                                        <input autocomplete="off" class="cvv_in number" id="post_cvv" maxlength="3" name="post[cvv]" size="3" tabindex="8" type="password">
+                                    </div>
+                                    <div class="cc"></div>
+                                    <hr class="magnit_hr">
+                                    <div class="errors">
+                                        <span>Введите корректные данные.</span>
+                                        <em class="arrow"></em>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="cc"></div>
+                        </form>    </div>
+                        <div class="ssl_info">
+                            Передача информации защищена сертификатом SSL 128 бит подписанным компанией Thawte. Сайт в полной мере отвечает стандартам безопасности платежных систем Visa и MasterCard<br>(PCI compliancy).<br>Надежность подтверждена сертификатом HackerSafe от McAfee.
+                        </div>
+                        <div class="cc"></div>
+                    </div>
+
+                </div>
+            </li>
+
+        </ul>
+
+
+
+
+        <div class="submit_block">
+            <div class="back_to_order">
+                <p></p>
+                <a href="https://gastroli2.vertalab.com/orders?notice=canceled">Вернуться к заказу</a>
+            </div>
+
+            <img align="right" alt="Loading" height="55" src="./Fatpay.net_files/loading.gif" style="display: none;" width="55"><br>
+            <button id="make_payment">Оплатить</button>
+            <div class="cc"></div>
+        </div>
+        <div class="notice">
+            <p>Безопасность платежей обеспечивается использованием SSL протокола для передачи конфиденциальной информации от клиента на сервер для дальнейшей обработки. Последующая обработка полученных конфиденциальных данных клиента (реквизиты карты, регистрационные данные и т. д.) производится в процессинговом центре. Таким образом, никто не может получить банковские данные Вашей кредитной карты.</p>
+
+
+            <p>
+            </p>
+
+
+            <p></p>
+        </div>
+    </div>
+    <ul class="list_ico">
+        <li><a href="http://localhost:3000/pay#" class="visa">VISA</a></li>
+        <li class="last"><a href="http://localhost:3000/pay#" class="mastercard">MASTERCARD</a></li>
+    </ul>
+    <div class="cc"></div>
+
+    <p>Идентификатор пользовательской сессии: 811478760</p>
+</div>
+</div>
+
+
+</div>
+
+</body></html>

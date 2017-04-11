@@ -380,7 +380,7 @@ describe('Maestro Momentum', function(){
         it('::getName', function(){
             var state = new DefaultState();
 
-            expect(state.getName()).toEqual('default');
+            expect(state.name).toEqual('default');
         });
     });
     describe('State Contexts', function(){
@@ -442,17 +442,23 @@ describe('Maestro Momentum', function(){
             });
             describe('card cvv wrapper - .card_owner', function(){
                 it('is visible', function(){
-                    expect(this.context.wrapper.find('.card_owner')).toBeVisible();
+                    var card_holder_wrapper = this.card.settings['card_holder_wrapper'];
+
+                    expect(this.context.wrapper.find(card_holder_wrapper)).toBeVisible();
                 });
             });
             describe('link #if_you_have_cvv', function(){
                 it('is hidden', function(){
-                    expect(this.context.wrapper.find('#if_you_have_cvv')).not.toBeVisible();
+                    var link = this.card.settings['if_you_have_cvv'];
+
+                    expect(this.context.wrapper.find(link)).not.toBeVisible();
                 });
             });
             describe('card holder label #card_holder_not_required', function(){
                 it('is hidden', function(){
-                    expect(this.context.wrapper.find('#card_holder_not_required')).not.toBeVisible();
+                    var label = this.card.settings['card_holder_not_required'];
+
+                    expect(this.context.wrapper.find(label)).not.toBeVisible();
                 });
             });
         });
@@ -508,17 +514,23 @@ describe('Maestro Momentum', function(){
             });
             describe('card cvv wrapper - .card_owner', function(){
                 it('is visible', function(){
-                    expect(this.context.wrapper.find('.card_owner')).toBeVisible();
+                    var card_holder_wrapper = this.card.settings['card_holder_wrapper'];
+
+                    expect(this.context.wrapper.find(card_holder_wrapper)).toBeVisible();
                 });
             });
             describe('link #if_you_have_cvv', function(){
                 it('is hidden', function(){
-                    expect(this.context.wrapper.find('#if_you_have_cvv')).not.toBeVisible();
+                    var link = this.card.settings['if_you_have_cvv'];
+
+                    expect(this.context.wrapper.find(link)).not.toBeVisible();
                 });
             });
             describe('card holder label #card_holder_not_required', function(){
                 it('is visible', function(){
-                    expect(this.context.wrapper.find('#card_holder_not_required')).toBeVisible();
+                    var label = this.card.settings['card_holder_not_required'];
+
+                    expect(this.context.wrapper.find(label)).toBeVisible();
                 });
             });
         });
@@ -578,17 +590,23 @@ describe('Maestro Momentum', function(){
             });
             describe('card cvv wrapper - .card_owner', function(){
                 it('is hidden', function(){
-                    expect(this.context.wrapper.find('.card_owner')).not.toBeVisible();
+                    var card_holder_wrapper = this.card.settings['card_holder_wrapper'];
+
+                    expect(this.context.wrapper.find(card_holder_wrapper)).not.toBeVisible();
                 });
             });
             describe('link #if_you_have_cvv', function(){
                 it('is visible', function(){
-                    expect(this.context.wrapper.find('#if_you_have_cvv')).toBeVisible();
+                    var link = this.card.settings['if_you_have_cvv'];
+
+                    expect(this.context.wrapper.find(link)).toBeVisible();
                 });
             });
             describe('card holder label #card_holder_not_required', function(){
                 it('is hidden', function(){
-                    expect(this.context.wrapper.find('#card_holder_not_required')).not.toBeVisible();
+                    var label = this.card.settings['card_holder_not_required'];
+
+                    expect(this.context.wrapper.find(label)).not.toBeVisible();
                 });
             });
         });

@@ -252,10 +252,6 @@ function DefaultState()
         context.wrapper.find(card.settings['if_you_have_cvv']).hide();
         context.wrapper.find(card.settings['card_holder_not_required']).hide();
     };
-    this.getName = function()
-    {
-      return this.name;
-    }
 };
 function MomentumActivatedState()
 {

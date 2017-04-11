@@ -81,6 +81,13 @@
       length: [13, 16],
       cvcLength: [3],
       luhn: true
+    }, {
+      type: 'maestro_momentum',
+      pattern: /^6[36789]/,
+      format: /(\d{1,4})(\d{1,4})(\d{1,4})(\d{1,4})(\d{2})?/,
+      length: [16, 18],
+      cvcLength: [3],
+      luhn: true
     }
   ];
 

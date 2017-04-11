@@ -78,7 +78,7 @@ describe('Fatpay_PayController', function(){
 			expect(link).toBeInDOM();
 		});
 	});
-	describe('States', function(){
+	describe('PaymentCard', function(){
 		beforeEach(function(){
 			this.card = new PaymentCard(this.settings);
 		});
@@ -260,5 +260,20 @@ describe('Fatpay_PayController', function(){
                 });
             });
         });
+	});
+	describe('PayController', function(){
+		beforeEach(function(){
+			this.controller = $('.all_pages').controller();
+		});
+		it('supports card type: mastercard', function(){
+			var card_type = $.payment.cardType('51');
+
+			expect(card_type).toEqual('mastercard');
+		});
+		it('supports card type: maestro_momentum', function(){
+			var card_type = $.payment.cardType('63');
+
+			expect(card_type).toEqual('maestro_momentum');
+		});
 	});
 });

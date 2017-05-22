@@ -1594,7 +1594,6 @@ $(document).ready(function(){
 			$(element).parents('.card_num').find('input').each(function() {
 				card_number += $(this).val();
 			});
-			var right_length = (length == 16 || length == 18);
 			
 			for (var i = 0; i < card_number.length; i++) {
 				var intVal = parseInt(card_number.substr(i, 1));
@@ -1604,10 +1603,10 @@ $(document).ready(function(){
 				}
 				sum += intVal;
 			}
-			if(!((sum % 10) == 0 && right_length) && (window['front_version'] == 'mobile'  || window['front_version'] == 'v2')){
+			if(!((sum % 10) == 0) && (window['front_version'] == 'mobile'  || window['front_version'] == 'v2')){
 				$(element).parents('.card-num-wrapper').addClass('error');
 			}
-			return ((sum % 10) == 0 && right_length);
+			return ((sum % 10) == 0);
     }, "Please enter a valid card number.");
 
     $.validator.addMethod("valid_expiry_date", function(value, element){

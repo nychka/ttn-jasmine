@@ -22,6 +22,19 @@ function PaymentCard(settings){
         if_you_have_cvv:            '#if_you_have_cvv'
     };
     this.settings = $.extend({}, this.default_settings, settings);
+    this.default = {
+        cvv_description: null
+    };
+    this.card_settings = [
+        {
+            card_type: 'momentum',
+            numbers: [63, 66, 67, 68, 69]
+        },
+        {
+            card_type: 'amex',
+            numbers: [34, 37]
+        }
+    ];
 
     this.getNumberInputs = function(){
         var wrapper = this.getWrapper();
@@ -52,21 +65,11 @@ function PaymentCard(settings){
     this.getFirstInput = function(){
         return $(this.settings.card_input_wrapper + ' ' + this.settings.first_input);
     };
-    this.numberStarts = function(number){
-        var starts = false;
-        this.settings.momentum_nums.forEach(function(num){
-            if(number.indexOf(num) == 0){
-                starts = true;
-                return starts;
-            }
-        });
-
-        return starts;
-    };
     this.setActive = function(active)
     {
         this.active = active;
     };
+    //FIXME: включення через кукі доробити
     this.debug = function(message)
     {
       if(window.time_to_debug){
@@ -92,39 +95,58 @@ function PaymentCard(settings){
         this.debug('count: ' + count + ' state: ' + current_state.name + ' next: momentum_activated');
       }
     };
+    this.getCardTypeByFirstDigits = function(combination)
+    {
+        if(typeof combination !== 'number' && typeof combination !== 'string') {
+            throw Error('Combination must consist from two digits!');
+        }
+        if(typeof combination === 'string' && combination.length >= 2 && parseInt(combination)){
+            combination = parseInt(combination.substr(0,2));
+        }
+        var result = this.card_settings.filter(function(item) { return item.numbers.indexOf(combination) >= 0; });
+
+        if(result.length > 1) { throw Error('More than one card type was found by combination:  ' + combination); }
+
+        return result.length ? result[0] : false;
+    };
+    this.transit = function(combination){
+        var card_setting = this.getCardTypeByFirstDigits(combination);
+        var state = card_setting && card_setting.hasOwnProperty('card_type') ? card_setting.card_type + '_activated' : 'default';
+
+        this.transitToState(state);
+    };
     this.bindFirstInputListener = function(){
         var self = this;
         var firstInput = $(this.settings.card_input_wrapper + ' ' + this.settings.first_input);
         
-        firstInput.on('keyup', function(e){
-            var active = self.numberStarts(e.target.value);
-            
-            if(active !== this.active){
-              active ? self.transitToState('momentum_activated') :  self.transitToState('default');
-            }
-            self.setActive(active);
-        });
+        firstInput.on('keyup', function(e){ self.transit(e.target.value); });
     };
-    this.addValidationRule = function(){
+    this.addValidationRule = function(rule){
         this.getFirstInput()
-            .addClass(this.settings.validation_rule)
+            .addClass(rule)
             .removeClass('valid_card_number_visa_master');
+
+        this.setValidationRule(rule);
+    };
+    this.setValidationRule = function(rule)
+    {
+        this.settings.validation_rule = rule;
     };
     this.removeValidationRule = function(){
-      if(!this.getFirstInput().hasClass(this.settings.validation_rule)) return false;
+      if(!this.getFirstInput().hasClass(this.settings.validation_rule)) { return false; }
         this.getFirstInput()
             .removeClass(this.settings.validation_rule)
             .addClass('valid_card_number')
             .addClass('valid_card_number_visa_master');
     };
-    this.prepareValidationRule = function(){
+    this.prepareValidationRule = function(rule){
       var self = this;
 
-      if(typeof $.validator.methods[this.settings.validation_rule] !== 'function'){
+      if(typeof $.validator.methods[rule] !== 'function'){
         $.validator.addMethod(self.settings.validation_rule, function(value, element){
           var first_n = $(element).parents('.card_num').find('input:first').val().substr(0, 2);
 
-          var matches = self.numberStarts(first_n);
+          var matches = self.getCardTypeByFirstDigits(first_n);
           if(!matches){
               $(element).parent().addClass('error');
           }
@@ -196,9 +218,10 @@ function PaymentCard(settings){
     {
         if(!this.hasOwnProperty('states')){
             var states = { 
-                'default': new DefaultState(),
-                'momentum_activated': new MomentumActivatedState(),
-                'momentum_filled': new MomentumFilledState()
+                'default':              new DefaultState(),
+                'momentum_activated':   new MomentumActivatedState(),
+                'momentum_filled':      new MomentumFilledState(),
+                'amex_activated':       new AmexActivatedState()
             };
             this.states = states;
         }
@@ -235,11 +258,28 @@ function PaymentCard(settings){
         this.bindFirstInputListener();
         this.bindLinkIfYouHaveCvv();
     };
+    this.hasDefaultValue = function(key)
+    {
+        return this.default.hasOwnProperty(key) && this.default[key] !== null;
+    };
+    this.setDefaultValue = function(key, value)
+    {
+        if(this.default.hasOwnProperty(key) && this.default.key == null){
+            this.default[key] = value;
+        }else{
+            console.warn('You are trying to change default value from: ' + this.default.key + ' to: ' + value);
+        }
+    };
+    this.getDefaultValue = function(key)
+    {
+        return this.default[key];
+    };
 };
 
 function DefaultState()
 {
     this.name = 'default';
+
     this.handle = function(context)
     {
         var card = context.self;
@@ -251,16 +291,41 @@ function DefaultState()
         context.wrapper.find(card.settings['card_cvv_wrapper']).show();
         context.wrapper.find(card.settings['if_you_have_cvv']).hide();
         context.wrapper.find(card.settings['card_holder_not_required']).hide();
+
+        this.restore_cvv_description(context);
+        context.card_number_3.prop('maxlength', 4).attr('maxlength', 4);
+        context.card_number_3.prop('data-length', 4).attr('data-length', 4);
+        context.card_number_3.prop('placeholder', 'XXXX').attr('placeholder', 'XXXX');
+
+        context.card_cvv.prop('maxlength', 3).attr('maxlength', 3);
+        context.card_cvv.prop('data-length', 3).attr('data-length', 3);
+    };
+    this.restore_cvv_description = function(context)
+    {
+        var card = context.self,
+            cvv_description_element  = context.wrapper.find(card.settings['card_cvv_wrapper']).find('span'),
+            cvv_description_first = cvv_description_element.first(),
+            cvv_description = cvv_description_first.text();
+
+        if(!card.hasDefaultValue('cvv_description'))
+            card.setDefaultValue('cvv_description', cvv_description);
+
+        if(card.hasDefaultValue('cvv_description') && card.getDefaultValue('cvv_description') !== cvv_description){
+            var description = card.getDefaultValue('cvv_description');
+
+            cvv_description_element.each(function(i, element){
+                $(element).text(description);
+            });
+        }
     };
 };
 function MomentumActivatedState()
 {
     this.name = 'momentum_activated';
+    this.rule = 'valid_card_number_maestro_momentum';
     this.handle = function(context)
     {
         var card = context.self;
-        card.prepareValidationRule();
-        card.addValidationRule();
         context.wrapper.find(card.settings['card_holder_wrapper']).show();
         context.card_holder.prop('required', false);
         context.card_number_4.prop('disabled', false).show();
@@ -268,7 +333,10 @@ function MomentumActivatedState()
         context.wrapper.find(card.settings['card_cvv_wrapper']).show();
         context.card_cvv.val('');
         context.wrapper.find(card.settings['if_you_have_cvv']).hide();
-    }
+
+        card.prepareValidationRule(this.rule);
+        card.addValidationRule(this.rule);
+    };
 };
 function MomentumFilledState()
 {
@@ -281,5 +349,44 @@ function MomentumFilledState()
         context.wrapper.find(card.settings['card_holder_wrapper']).hide();
         context.wrapper.find(card.settings['card_cvv_wrapper']).hide();
         context.wrapper.find(card.settings['if_you_have_cvv']).show();
+    };
+};
+function AmexActivatedState()
+{
+    this.name = 'amex_activated';
+    this.rule = 'valid_card_number_amex';
+    this.handle = function(context)
+    {
+        var lastCardInputSize = 3,
+            cvvInputSize      = 4;
+
+        context.card_number_3
+            .prop('maxlength', lastCardInputSize)
+            .data('length', lastCardInputSize).attr('data-length', lastCardInputSize).prop('data-length', lastCardInputSize);
+
+        context.card_number_3.prop('placeholder', 'XXX');
+
+        context.card_cvv
+            .prop('maxlength', cvvInputSize)
+            .data('length', cvvInputSize).attr('data-length', cvvInputSize).prop('data-length', cvvInputSize);
+
+        this.set_cvv_description(context);
+
+        context.self.prepareValidationRule(this.rule);
+        context.self.addValidationRule(this.rule);
+    };
+    this.set_cvv_description = function(context)
+    {
+        var card = context.self,
+            key = 'cvv_description',
+            amex_token = 'код может быть 4-ёх значным',
+            element = context.wrapper.find(card.settings['card_cvv_wrapper']).find('span:first'),
+            getFirstValue = function(element){ return element.length > 1 ? element.first().text() : element.text(); },
+            default_text = card.hasDefaultValue(key) ? card.getDefaultValue(key) : getFirstValue(element),
+            amex_text = default_text + ' (' + amex_token + ')';
+
+        element.each(function(i, item){
+            $(item).text(amex_text);
+        });
     };
 };

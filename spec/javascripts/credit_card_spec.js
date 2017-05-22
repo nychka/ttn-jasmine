@@ -24,7 +24,7 @@ describe("CreditCard", function(){
 		var card_number = $('#card_number_0');
 		card_number.val('');
 		expect($('form').valid()).toBeFalsy();
-		expect(form_validator.errorList[0].message).toEqual('Please enter a valid card number.');
+		expect(form_validator.errorList[0].message).toEqual('Please enter a valid card number. VISA or MasterCard');
 	});
 	it("validates real card when text field starts with 51", function(){
 		loadFixtures("real_card.html");

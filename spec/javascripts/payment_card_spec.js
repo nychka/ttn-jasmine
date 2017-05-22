@@ -199,7 +199,7 @@
             expect(first).not.toHaveClass('valid_card_number_maestro_momentum');
         });
     });
-describe('Maestro Momentum', function(){
+    describe('Maestro Momentum', function(){
     it('checks card wrapper', function(){
         var card = new PaymentCard();
         expect(card.getWrapper()).toExist();
@@ -225,17 +225,12 @@ describe('Maestro Momentum', function(){
         $('#card_number_0').val(1234);
         expect(card.getCount()).toEqual(4);
     });
-    it('::numberStarts() with 63', function(){
+    it('::getCardTypeByFirstDigits()', function(){
         var card = new PaymentCard();
-        expect(card.numberStarts('63')).toBeTruthy();
-    });
-    it('::numberStarts() with 63', function(){
-        var card = new PaymentCard();
-        expect(card.numberStarts('63')).toBeTruthy();
-    });
-    it('::numberStarts() with 63', function(){
-        var card = new PaymentCard();
-        expect(card.numberStarts('63')).toBeTruthy();
+        expect(card.getCardTypeByFirstDigits('63').card_type).toEqual('momentum');
+        expect(card.getCardTypeByFirstDigits(63).card_type).toEqual('momentum');
+        expect(card.getCardTypeByFirstDigits(64)).toBeFalsy();
+        expect(card.getCardTypeByFirstDigits('')).toBeFalsy();
     });
     it('::getFirstInput', function(){
         var card = new PaymentCard();
@@ -309,10 +304,11 @@ describe('Maestro Momentum', function(){
         var card = new PaymentCard();
         var states = card.getAllStates();
 
-        expect(Object.keys(states).length).toEqual(3);
+        expect(Object.keys(states).length).toEqual(4);
         expect(states['default'] instanceof DefaultState).toBeTruthy();
         expect(states['momentum_activated'] instanceof MomentumActivatedState).toBeTruthy();
         expect(states['momentum_filled'] instanceof MomentumFilledState).toBeTruthy();
+        expect(states['amex_activated'] instanceof AmexActivatedState).toBeTruthy();
     });
     it('::getState', function(){
         var card = new PaymentCard();
@@ -610,304 +606,352 @@ describe('Maestro Momentum', function(){
                 });
             });
         });
-    });
-describe('when active', function(){
-    it('when enters 18 signs form is valid according to Luhn\'s algorythm', function(){
-        var card = new PaymentCard();
-        card.transitToState('momentum_activated');
-        var form = $('form');
-        var form_validator = form.validate();
-        var first  = $('#card_number_0'),
-        second = $('#card_number_1'),
-        third  = $('#card_number_2'),
-        fourth = $('#card_number_3'),
-        extra  = $('#card_number_4'),
-        month  = $('#card_date_month'),
-        year   = $('#card_date_year'),
-        card_holder  = $('#card_holder'),
-        cvv    = $('#card_cvv');
-
-
-        first.val('6368');
-        second.val('7572');
-        third.val('5168');
-        fourth.val('9718');
-        extra.val('56');
-        month.val(12);
-        year.val(20);
-        card_holder.val('Cardholder');
-        cvv.val(123);
-
-        expect(card.getCount()).toEqual(18);
-        expect(first).toHaveClass('valid_card_number');
-        expect(card.passLuhnAlgorythm('6368 7572 5168 9718 56'));
-        expect(form.valid()).toBeTruthy();
-    });
-    it('when enters 18 signs form is not valid: violates Luhn algorythm', function(){
-        var card = new PaymentCard();
-        card.transitToState('momentum_activated');
-        var form = $('form');
-        var form_validator = form.validate();
-        var first  = $('#card_number_0'),
-        second = $('#card_number_1'),
-        third  = $('#card_number_2'),
-        fourth = $('#card_number_3'),
-        extra  = $('#card_number_4'),
-        month  = $('#card_date_month'),
-        year   = $('#card_date_year'),
-        card_holder  = $('#card_holder'),
-        cvv    = $('#card_cvv');
-
-
-        first.val('6368');
-        second.val('7572');
-        third.val('5168');
-        fourth.val('9718');
-        extra.val('55');
-        month.val(12);
-        year.val(20);
-        card_holder.val('Cardholder');
-        cvv.val(123);
-
-        expect(card.getCount()).toEqual(18);
-        expect(first).toHaveClass('valid_card_number');
-        expect(form.valid()).toBeFalsy();
-    });
-    it('form is not valid when enters only 2 digits', function(){
-        var card = new PaymentCard();
-        card.transitToState('momentum_activated');
-        var form = $('form');
-        var form_validator = form.validate();
-        var first  = $('#card_number_0'),
-        second = $('#card_number_1'),
-        third  = $('#card_number_2'),
-        fourth = $('#card_number_3'),
-        extra  = $('#card_number_4'),
-        month  = $('#card_date_month'),
-        year   = $('#card_date_year'),
-        card_holder  = $('#card_holder'),
-        cvv    = $('#card_cvv');
-
-
-        first.val('63');
-                    // second.val('7572');
-                    // third.val('5168');
-                    // fourth.val('9712');
-                    month.val(12);
-                    year.val(20);
-                    card_holder.val('Cardholder');
-                    cvv.val(123);
-
-                    expect(card.getCount()).toEqual(2);
-                    expect(form.valid()).toBeFalsy();
+        describe('Amex Activated', function(){
+            beforeEach(function(){
+                this.card.transitToState('default');
+                this.card.transitToState('amex_activated');
+                this.context = this.card.getContext();
+                this.cvv_description = 'CVV или CVC - трехзначный код на обратной стороне карты';
+                this.cvv_amex_token = 'код может быть 4-ёх значным';
+                this.cvv_amex_description = this.cvv_description + ' (' + this.cvv_amex_token + ')';
+            });
+            describe('last 16-th digit of card numbers', function() {
+                it('removes last digit', function () {
+                    expect(this.context.card_number_3).toHaveAttr('maxlength', '3');
+                    expect(this.context.card_number_3).toHaveAttr('data-length', '3');
+                    expect(this.context.card_number_3).toHaveAttr('placeholder', 'XXX');
                 });
-    it('appends additional input with XX placeholder', function(){
-        var card = new PaymentCard();
-        card.transitToState('momentum_activated');
-        expect($('#card_number_4')).toExist();
+            });
+            describe('CVV', function(){
+               it('adds extra digit to CVV', function(){
+                    expect(this.context.card_cvv).toHaveAttr('maxlength', '4');
+                    expect(this.context.card_cvv).toHaveAttr('data-length', '4');
+               });
+               it('adds description about 4-th digit CVV', function(){
+                    var element = this.context.wrapper.find(this.card.settings['card_cvv_wrapper']).find('span:first').first();
+
+                    expect(element).toContainText(this.cvv_amex_description);
+                    expect(element.text()).toEqual(this.cvv_amex_description);
+               });
+            });
+            describe('transits to Default state', function(){
+                beforeEach(function(){
+                    this.card.transitToState('default');
+                });
+                it('restores default CVV description', function(){
+                    var element = this.context.wrapper.find(this.card.settings['card_cvv_wrapper']).find('span:first').first();
+
+                    expect(element.text()).toEqual(this.cvv_description);
+                });
+                it('restores last 16-th digit of card numbers', function(){
+                    expect(this.context.card_number_3).toHaveAttr('maxlength', '4');
+                    expect(this.context.card_number_3).toHaveAttr('data-length', '4');
+                    expect(this.context.card_number_3).toHaveAttr('placeholder', 'XXXX');
+                });
+                it('removes extra digit from CVV', function(){
+                    expect(this.context.card_cvv).toHaveAttr('maxlength', '3');
+                    expect(this.context.card_cvv).toHaveAttr('data-length', '3');
+                });
+            });
+        });
     });
-    it('card holder not required', function(){
+    describe('when active', function(){
+        it('when enters 18 signs form is valid according to Luhn\'s algorythm', function(){
+            var card = new PaymentCard();
+            card.transitToState('momentum_activated');
+            var form = $('form');
+            var form_validator = form.validate();
+            var first  = $('#card_number_0'),
+            second = $('#card_number_1'),
+            third  = $('#card_number_2'),
+            fourth = $('#card_number_3'),
+            extra  = $('#card_number_4'),
+            month  = $('#card_date_month'),
+            year   = $('#card_date_year'),
+            card_holder  = $('#card_holder'),
+            cvv    = $('#card_cvv');
+
+
+            first.val('6368');
+            second.val('7572');
+            third.val('5168');
+            fourth.val('9718');
+            extra.val('56');
+            month.val(12);
+            year.val(20);
+            card_holder.val('Cardholder');
+            cvv.val(123);
+
+            expect(card.getCount()).toEqual(18);
+            expect(first).toHaveClass('valid_card_number');
+            expect(card.passLuhnAlgorythm('6368 7572 5168 9718 56'));
+            expect(form.valid()).toBeTruthy();
+        });
+        it('when enters 18 signs form is not valid: violates Luhn algorythm', function(){
+            var card = new PaymentCard();
+            card.transitToState('momentum_activated');
+            var form = $('form');
+            var form_validator = form.validate();
+            var first  = $('#card_number_0'),
+            second = $('#card_number_1'),
+            third  = $('#card_number_2'),
+            fourth = $('#card_number_3'),
+            extra  = $('#card_number_4'),
+            month  = $('#card_date_month'),
+            year   = $('#card_date_year'),
+            card_holder  = $('#card_holder'),
+            cvv    = $('#card_cvv');
+
+
+            first.val('6368');
+            second.val('7572');
+            third.val('5168');
+            fourth.val('9718');
+            extra.val('55');
+            month.val(12);
+            year.val(20);
+            card_holder.val('Cardholder');
+            cvv.val(123);
+
+            expect(card.getCount()).toEqual(18);
+            expect(first).toHaveClass('valid_card_number');
+            expect(form.valid()).toBeFalsy();
+        });
+        it('form is not valid when enters only 2 digits', function(){
+            var card = new PaymentCard();
+            card.transitToState('momentum_activated');
+            var form = $('form');
+            var form_validator = form.validate();
+            var first  = $('#card_number_0'),
+            second = $('#card_number_1'),
+            third  = $('#card_number_2'),
+            fourth = $('#card_number_3'),
+            extra  = $('#card_number_4'),
+            month  = $('#card_date_month'),
+            year   = $('#card_date_year'),
+            card_holder  = $('#card_holder'),
+            cvv    = $('#card_cvv');
+
+
+            first.val('63');
+                        // second.val('7572');
+                        // third.val('5168');
+                        // fourth.val('9712');
+                        month.val(12);
+                        year.val(20);
+                        card_holder.val('Cardholder');
+                        cvv.val(123);
+
+                        expect(card.getCount()).toEqual(2);
+                        expect(form.valid()).toBeFalsy();
+                    });
+        it('appends additional input with XX placeholder', function(){
+            var card = new PaymentCard();
+            card.transitToState('momentum_activated');
+            expect($('#card_number_4')).toExist();
+        });
+        it('card holder not required', function(){
+            loadFixtures('maestro_momentum.html');
+            var card = new PaymentCard();
+            card.transitToState('momentum_activated');
+            var card_holder = $('#card_holder');
+            expect(card_holder).not.toHaveAttr('required');
+            expect(card_holder.valid()).toBeTruthy();
+            expect($('#card_holder_not_required')).toBeInDOM();
+            expect($('#card_holder_not_required')).toBeVisible();
+        });
+        it('adds validation rule for first input', function(){
+            var card = new PaymentCard();
+            card.transitToState('momentum_activated');
+            var first_input = card.getFirstInput();
+            expect(first_input).toHaveClass('valid_card_number_maestro_momentum');
+                    // expect(first_input).not.toHaveClass('valid_card_number');
+                    expect(first_input).not.toHaveClass('valid_card_number_visa_master');
+                });
+        describe('enters 16 signs', function(){
+            it('all inputs are active', function(){
+                var card = new PaymentCard();
+                card.transitToState('momentum_activated');
+                var form = $('form');
+                var form_validator = form.validate();
+                var first  = $('#card_number_0'),
+                second = $('#card_number_1'),
+                third  = $('#card_number_2'),
+                fourth = $('#card_number_3'),
+                extra  = $('#card_number_4'),
+                month  = $('#card_date_month'),
+                year   = $('#card_date_year'),
+                card_holder  = $('#card_holder'),
+                cvv    = $('#card_cvv');
+
+
+                first.val('6312');
+                second.val('7572');
+                third.val('5168');
+                fourth.val('9712');
+                month.val(12);
+                year.val(20);
+                card_holder.val('Cardholder');
+                cvv.val(123);
+
+                expect(card.getCount()).toEqual(16);
+                expect(form.valid()).toBeTruthy();
+
+                expect(extra).toBeVisible();
+                expect(extra).not.toHaveAttr('required');
+                expect(cvv).toBeVisible();
+                expect(cvv).toHaveAttr('required');
+                expect(month).toHaveAttr('required');
+                expect(year).toHaveAttr('required');
+                expect(card_holder).not.toHaveAttr('required');
+                expect(first).not.toHaveClass('valid_card_number_visa_master');
+                expect(first).toHaveClass('valid_card_number_maestro_momentum');
+                expect(first).toHaveClass('valid_card_number');
+            });
+            it('cvv is required and link #if_you_have_cvv is hidden', function(){
+                var card = new PaymentCard();
+                card.transitToState('momentum_activated');
+                var form = $('form');
+                var form_validator = form.validate();
+                var first  = $('#card_number_0'),
+                second = $('#card_number_1'),
+                third  = $('#card_number_2'),
+                fourth = $('#card_number_3'),
+                extra  = $('#card_number_4'),
+                month  = $('#card_date_month'),
+                year   = $('#card_date_year'),
+                card_holder  = $('#card_holder'),
+                cvv    = $('#card_cvv');
+
+
+                first.val('6368');
+                second.val('7572');
+                third.val('5168');
+                fourth.val('9715');
+                month.val(12);
+                year.val(20);
+                card_holder.val('Cardholder');
+                cvv.val(123);
+
+                expect(card.getCount()).toEqual(16);
+                expect(form.valid()).toBeTruthy();
+                expect($('#if_you_have_cvv')).not.toBeVisible();
+                expect(cvv).toBeVisible();
+                expect(cvv).toHaveAttr('required');
+            });
+            it('card holder is not required and label #card_holder_not_required is visible', function(){
+                var card = new PaymentCard();
+                card.transitToState('momentum_activated');
+                var form = $('form');
+                var form_validator = form.validate();
+                var first  = $('#card_number_0'),
+                second = $('#card_number_1'),
+                third  = $('#card_number_2'),
+                fourth = $('#card_number_3'),
+                extra  = $('#card_number_4'),
+                month  = $('#card_date_month'),
+                year   = $('#card_date_year'),
+                card_holder  = $('#card_holder'),
+                cvv    = $('#card_cvv');
+
+
+                first.val('6368');
+                second.val('7572');
+                third.val('5168');
+                fourth.val('9715');
+                month.val(12);
+                year.val(20);
+                card_holder.val('Cardholder');
+                cvv.val(123);
+
+                expect(card.getCount()).toEqual(16);
+                expect(form.valid()).toBeTruthy();
+                expect(card_holder).not.toHaveAttr('required');
+                expect($('#card_holder_not_required')).toBeVisible();
+            });
+            it('first input has class .valid_card_number_maestro_momentum', function(){
+                var card = new PaymentCard();
+                card.transitToState('momentum_activated');
+                var form = $('form');
+                var form_validator = form.validate();
+                var first  = $('#card_number_0'),
+                second = $('#card_number_1'),
+                third  = $('#card_number_2'),
+                fourth = $('#card_number_3'),
+                extra  = $('#card_number_4'),
+                month  = $('#card_date_month'),
+                year   = $('#card_date_year'),
+                card_holder  = $('#card_holder'),
+                cvv    = $('#card_cvv');
+
+
+                first.val('6368');
+                second.val('7572');
+                third.val('5168');
+                fourth.val('9715');
+                month.val(12);
+                year.val(20);
+                card_holder.val('Cardholder');
+                cvv.val(123);
+
+                expect(card.getCount()).toEqual(16);
+                expect(form.valid()).toBeTruthy();
+
+                expect(first).not.toHaveClass('valid_card_number_visa_master');
+                expect(first).toHaveClass('valid_card_number_maestro_momentum');
+                expect(first).toHaveClass('valid_card_number');
+            });
+        });
+    });
+    describe('when unactive', function(){
+       it('card holder is required', function(){
+           loadFixtures('maestro_momentum.html');
+           var card = new PaymentCard();
+           card.transitToState('default');
+           expect($('#card_holder')).toHaveAttr('required');
+       });
+       it('card holder text is hidden', function(){
+        loadFixtures('maestro_momentum.html');
+        var card = new PaymentCard();
+        card.transitToState('default');
+        expect($('#card_holder_not_required')).not.toBeVisible();
+    });
+       it('removes validation rule from first input', function(){
+        loadFixtures('maestro_momentum.html');
+        var card = new PaymentCard();
+        card.transitToState('default');
+        expect($('#card_number_0')).not.toHaveClass('valid_card_number_maestro_momentum');
+        expect($('#card_number_0')).toHaveClass('valid_card_number');
+        expect($('#card_number_0')).toHaveClass('valid_card_number_visa_master');
+    });
+       it('clears additional card number input value', function(){
         loadFixtures('maestro_momentum.html');
         var card = new PaymentCard();
         card.transitToState('momentum_activated');
-        var card_holder = $('#card_holder');
-        expect(card_holder).not.toHaveAttr('required');
-        expect(card_holder.valid()).toBeTruthy();
-        expect($('#card_holder_not_required')).toBeInDOM();
-        expect($('#card_holder_not_required')).toBeVisible();
+        var input = card.getContext()['card_number_4'];
+        input.val('foo');
+        card.transitToState('default');
+        expect(input).toBeInDOM();
+        expect(input).not.toBeVisible();
+        expect(input).toHaveValue('');
     });
-    it('adds validation rule for first input', function(){
-        var card = new PaymentCard();
-        card.transitToState('momentum_activated');
-        var first_input = card.getFirstInput();
-        expect(first_input).toHaveClass('valid_card_number_maestro_momentum');
-                // expect(first_input).not.toHaveClass('valid_card_number');
-                expect(first_input).not.toHaveClass('valid_card_number_visa_master');
-            });
-    describe('enters 16 signs', function(){
-        it('all inputs are active', function(){
-            var card = new PaymentCard();
-            card.transitToState('momentum_activated');
-            var form = $('form');
-            var form_validator = form.validate();
-            var first  = $('#card_number_0'),
-            second = $('#card_number_1'),
-            third  = $('#card_number_2'),
-            fourth = $('#card_number_3'),
-            extra  = $('#card_number_4'),
-            month  = $('#card_date_month'),
-            year   = $('#card_date_year'),
-            card_holder  = $('#card_holder'),
-            cvv    = $('#card_cvv');
-
-
-            first.val('6312');
-            second.val('7572');
-            third.val('5168');
-            fourth.val('9712');
-            month.val(12);
-            year.val(20);
-            card_holder.val('Cardholder');
-            cvv.val(123);
-
-            expect(card.getCount()).toEqual(16);
-            expect(form.valid()).toBeTruthy();
-
-            expect(extra).toBeVisible();
-            expect(extra).not.toHaveAttr('required');
-            expect(cvv).toBeVisible();
-            expect(cvv).toHaveAttr('required');
-            expect(month).toHaveAttr('required');
-            expect(year).toHaveAttr('required');
-            expect(card_holder).not.toHaveAttr('required');
-            expect(first).not.toHaveClass('valid_card_number_visa_master');
-            expect(first).toHaveClass('valid_card_number_maestro_momentum');
-            expect(first).toHaveClass('valid_card_number');
-        });
-        it('cvv is required and link #if_you_have_cvv is hidden', function(){
-            var card = new PaymentCard();
-            card.transitToState('momentum_activated');
-            var form = $('form');
-            var form_validator = form.validate();
-            var first  = $('#card_number_0'),
-            second = $('#card_number_1'),
-            third  = $('#card_number_2'),
-            fourth = $('#card_number_3'),
-            extra  = $('#card_number_4'),
-            month  = $('#card_date_month'),
-            year   = $('#card_date_year'),
-            card_holder  = $('#card_holder'),
-            cvv    = $('#card_cvv');
-
-
-            first.val('6368');
-            second.val('7572');
-            third.val('5168');
-            fourth.val('9715');
-            month.val(12);
-            year.val(20);
-            card_holder.val('Cardholder');
-            cvv.val(123);
-
-            expect(card.getCount()).toEqual(16);
-            expect(form.valid()).toBeTruthy();
-            expect($('#if_you_have_cvv')).not.toBeVisible();
-            expect(cvv).toBeVisible();
-            expect(cvv).toHaveAttr('required');
-        });
-        it('card holder is not required and label #card_holder_not_required is visible', function(){
-            var card = new PaymentCard();
-            card.transitToState('momentum_activated');
-            var form = $('form');
-            var form_validator = form.validate();
-            var first  = $('#card_number_0'),
-            second = $('#card_number_1'),
-            third  = $('#card_number_2'),
-            fourth = $('#card_number_3'),
-            extra  = $('#card_number_4'),
-            month  = $('#card_date_month'),
-            year   = $('#card_date_year'),
-            card_holder  = $('#card_holder'),
-            cvv    = $('#card_cvv');
-
-
-            first.val('6368');
-            second.val('7572');
-            third.val('5168');
-            fourth.val('9715');
-            month.val(12);
-            year.val(20);
-            card_holder.val('Cardholder');
-            cvv.val(123);
-
-            expect(card.getCount()).toEqual(16);
-            expect(form.valid()).toBeTruthy();
-            expect(card_holder).not.toHaveAttr('required');
-            expect($('#card_holder_not_required')).toBeVisible();
-        });
-        it('first input has class .valid_card_number_maestro_momentum', function(){
-            var card = new PaymentCard();
-            card.transitToState('momentum_activated');
-            var form = $('form');
-            var form_validator = form.validate();
-            var first  = $('#card_number_0'),
-            second = $('#card_number_1'),
-            third  = $('#card_number_2'),
-            fourth = $('#card_number_3'),
-            extra  = $('#card_number_4'),
-            month  = $('#card_date_month'),
-            year   = $('#card_date_year'),
-            card_holder  = $('#card_holder'),
-            cvv    = $('#card_cvv');
-
-
-            first.val('6368');
-            second.val('7572');
-            third.val('5168');
-            fourth.val('9715');
-            month.val(12);
-            year.val(20);
-            card_holder.val('Cardholder');
-            cvv.val(123);
-
-            expect(card.getCount()).toEqual(16);
-            expect(form.valid()).toBeTruthy();
-
-            expect(first).not.toHaveClass('valid_card_number_visa_master');
-            expect(first).toHaveClass('valid_card_number_maestro_momentum');
-            expect(first).toHaveClass('valid_card_number');
-        });
     });
-});
-describe('when unactive', function(){
-   it('card holder is required', function(){
-       loadFixtures('maestro_momentum.html');
-       var card = new PaymentCard();
-       card.transitToState('default');
-       expect($('#card_holder')).toHaveAttr('required');
-   });
-   it('card holder text is hidden', function(){
-    loadFixtures('maestro_momentum.html');
-    var card = new PaymentCard();
-    card.transitToState('default');
-    expect($('#card_holder_not_required')).not.toBeVisible();
-});
-   it('removes validation rule from first input', function(){
-    loadFixtures('maestro_momentum.html');
-    var card = new PaymentCard();
-    card.transitToState('default');
-    expect($('#card_number_0')).not.toHaveClass('valid_card_number_maestro_momentum');
-    expect($('#card_number_0')).toHaveClass('valid_card_number');
-    expect($('#card_number_0')).toHaveClass('valid_card_number_visa_master');
-});
-   it('clears additional card number input value', function(){
-    loadFixtures('maestro_momentum.html');
-    var card = new PaymentCard();
-    card.transitToState('momentum_activated');
-    var input = card.getContext()['card_number_4'];
-    input.val('foo');
-    card.transitToState('default');
-    expect(input).toBeInDOM();
-    expect(input).not.toBeVisible();
-    expect(input).toHaveValue('');
-});
-});
-describe('MultiBlock', function(){
-    it('bind listeners to all available card blocks', function(){
-        var card = new PaymentCard();
-        card.bindFirstInputListener();
-        var card_blocks = card.getCardBlocks();
-        var active = $(card_blocks[0]);
-        var disabled = $(card_blocks[1]);
-        expect(active).toBeVisible();
-        expect(disabled).not.toBeVisible();
+    describe('MultiBlock', function(){
+        it('bind listeners to all available card blocks', function(){
+            var card = new PaymentCard();
+            card.bindFirstInputListener();
+            var card_blocks = card.getCardBlocks();
+            var active = $(card_blocks[0]);
+            var disabled = $(card_blocks[1]);
+            expect(active).toBeVisible();
+            expect(disabled).not.toBeVisible();
 
-                var active_first = active.find('#card_number_0');//debugger;
-                var disabled_first = disabled.find('#card_number_0');
-                expect(active_first).not.toHaveClass('valid_card_number_maestro_momentum');
-                expect(disabled_first).not.toHaveClass('valid_card_number_maestro_momentum');
-                active_first.val('63').trigger('keyup');
-                expect(active_first).toHaveClass('valid_card_number_maestro_momentum');
+                    var active_first = active.find('#card_number_0');//debugger;
+                    var disabled_first = disabled.find('#card_number_0');
+                    expect(active_first).not.toHaveClass('valid_card_number_maestro_momentum');
+                    expect(disabled_first).not.toHaveClass('valid_card_number_maestro_momentum');
+                    active_first.val('63').trigger('keyup');
+                    expect(active_first).toHaveClass('valid_card_number_maestro_momentum');
 
                 disabled_first.val('63').trigger('keyup');
                 expect(disabled_first).toHaveClass('valid_card_number_maestro_momentum');
@@ -922,34 +966,87 @@ describe('MultiBlock', function(){
         expect(active).toBeVisible();
         expect(disabled).not.toBeVisible();
 
-                var active_first = active.find('#card_number_0');//debugger;
-                var disabled_first = disabled.find('#card_number_0');
-                active.find('#card_number_0').val('6311');
-                active.find('#card_number_1').val('1111');
-                active.find('#card_number_2').val('1111');
-                active.find('#card_number_3').val('1111');
-                active.find('#card_number_4').val('11');
+                    var active_first = active.find('#card_number_0');//debugger;
+                    var disabled_first = disabled.find('#card_number_0');
+                    active.find('#card_number_0').val('6311').trigger('keyup');
+                    active.find('#card_number_1').val('1111');
+                    active.find('#card_number_2').val('1111');
+                    active.find('#card_number_3').val('1111');
+                    active.find('#card_number_4').val('11');
 
-                expect(card.getCount()).toEqual(18);
-                expect(active.find('.card_owner')).toBeVisible();
-                active_first.trigger('keyup');
-                expect(active.find('.card_owner')).not.toBeVisible();
+                    expect(card.getCount()).toEqual(18);
+                    expect(card.getCurrentState().name).toEqual('momentum_activated');
+                    expect(active.find('.card_owner')).toBeVisible();
+                    active_first.trigger('keyup');
+                    expect(card.getCurrentState().name).toEqual('momentum_filled');
+                    expect(active.find('.card_owner')).not.toBeVisible();
 
-                disabled_first.val('63').trigger('keyup');
-                expect(disabled_first).toHaveClass('valid_card_number_maestro_momentum');
-                disabled.find('#card_number_0').val('6311');
-                disabled.find('#card_number_1').val('1111');
-                disabled.find('#card_number_2').val('1111');
-                disabled.find('#card_number_3').val('1111');
-                disabled.find('#card_number_4').val('11');
-                disabled.find('#card_holder').val('Cardholder');
-                expect(card.getCount()).toEqual(18);
-                var card_holder = disabled.find('#card_holder');
-                expect(card_holder.val()).toEqual('Cardholder');
-                disabled_first.trigger('keyup');
-                expect(card_holder.val()).toEqual('');
-                expect(card_holder).not.toBeVisible();
+                    disabled_first.val('63').trigger('keyup');
+                    expect(disabled_first).toHaveClass('valid_card_number_maestro_momentum');
+                    disabled.find('#card_number_0').val('6311');
+                    disabled.find('#card_number_1').val('1111');
+                    disabled.find('#card_number_2').val('1111');
+                    disabled.find('#card_number_3').val('1111');
+                    disabled.find('#card_number_4').val('11');
+                    disabled.find('#card_holder').val('Cardholder');
+                    expect(card.getCount()).toEqual(18);
+                    var card_holder = disabled.find('#card_holder');
+                    expect(card_holder.val()).toEqual('Cardholder');
+                    disabled_first.trigger('keyup');
+                    expect(card_holder.val()).toEqual('');
+                    expect(card_holder).not.toBeVisible();
+                });
+    });
+    });
+    describe('American Express', function(){
+        describe('validation', function(){
+            it('has validation rule only when amex_activated state is active', function(){
+                var card = new PaymentCard();
+                var context = card.getContext();
+                card.transitToState('default');
+                expect(context.card_number_0).not.toHaveClass('valid_card_number_amex');
+                card.transitToState('amex_activated');
+                expect(context.card_number_0).toHaveClass('valid_card_number_amex');
+                card.transitToState('default');
+                expect(context.card_number_0).not.toHaveClass('valid_card_number_amex');
             });
-});
-});
+            //TODO: valid_card_number переробити
+            it('card_number_0 is valid when has class valid_card_number_amex', function(){
+                var card = new PaymentCard();
+                card.transitToState('amex_activated');
+                var form = $('form');
+                var form_validator = form.validate();
+                var context = card.getContext();
+                context.card_number_0.val('3400');
+                context.card_number_1.val('0000');
+                context.card_number_2.val('0000');
+                context.card_number_3.val('000');
+                context.card_date_month.val(12);
+                context.card_date_year.val(20);
+                context.card_holder.val('Cardholder');
+                context.card_cvv.val(123);
+
+                expect(form.valid()).toBeTruthy();
+                console.log(form_validator.errorList);
+                expect(form_validator.errorList.length).toEqual(0);
+            });
+        });
+        describe('numbers [34, 37] activates AmexActivatedState', function(){
+            it('first input triggers with [34] and transits to AmexActivatedState', function(){
+                var card = new PaymentCard();
+                var card_number = card.getFirstInput();
+                card.bindFirstInputListener();
+                card_number.val('34').trigger('keyup');
+                var current_state = card.getCurrentState();
+
+                expect(card.getCount()).toEqual(2);
+                expect(current_state.name).toEqual('amex_activated');
+
+                card_number.val('51').trigger('keyup');
+                var current_state = card.getCurrentState();
+
+                expect(current_state.name).toEqual('default');
+            });
+        });
+    });
 });

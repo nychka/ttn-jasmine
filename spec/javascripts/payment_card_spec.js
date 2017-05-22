@@ -625,7 +625,7 @@
             describe('CVV', function(){
                it('adds extra digit to CVV', function(){
                     expect(this.context.card_cvv).toHaveAttr('maxlength', '4');
-                    expect(this.context.card_cvv).toHaveAttr('data-length', '4');
+                    expect(this.context.card_cvv).toHaveAttr('data-length', '3');
                });
                it('adds description about 4-th digit CVV', function(){
                     var element = this.context.wrapper.find(this.card.settings['card_cvv_wrapper']).find('span:first').first();
@@ -1027,7 +1027,24 @@
                 context.card_cvv.val(123);
 
                 expect(form.valid()).toBeTruthy();
-                console.log(form_validator.errorList);
+                expect(form_validator.errorList.length).toEqual(0);
+            });
+            it('cvv can be 4-digit', function(){
+                var card = new PaymentCard();
+                card.transitToState('amex_activated');
+                var form = $('form');
+                var form_validator = form.validate();
+                var context = card.getContext();
+                context.card_number_0.val('3400');
+                context.card_number_1.val('0000');
+                context.card_number_2.val('0000');
+                context.card_number_3.val('000');
+                context.card_date_month.val(12);
+                context.card_date_year.val(20);
+                context.card_holder.val('Cardholder');
+                context.card_cvv.val(1234);
+
+                expect(form.valid()).toBeTruthy();
                 expect(form_validator.errorList.length).toEqual(0);
             });
         });

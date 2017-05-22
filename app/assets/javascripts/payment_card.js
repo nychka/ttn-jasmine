@@ -368,7 +368,7 @@ function AmexActivatedState()
 
         context.card_cvv
             .prop('maxlength', cvvInputSize)
-            .data('length', cvvInputSize).attr('data-length', cvvInputSize).prop('data-length', cvvInputSize);
+            .data('length', cvvInputSize); //.attr('data-length', cvvInputSize); //.prop('data-length', cvvInputSize);
 
         this.set_cvv_description(context);
 

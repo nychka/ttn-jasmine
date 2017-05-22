@@ -1527,7 +1527,12 @@ $(document).ready(function(){
 	}, "Please choose card type.");
 
     $.validator.addMethod("valid_cvv2_number", function(value, element){
-        return ($.trim(value).length == 3);
+    	var cvv_input = $(element),
+    		minLength = cvv_input.attr('data-length') && parseInt(cvv_input.attr('data-length')),
+    		maxLength = parseInt(cvv_input.prop('maxlength')),
+    		length = $.trim(value).length;
+
+    	return minLength !== maxLength ? length >= minLength && length <= maxLength : length === maxLength;
     }, "Please enter a valid card number.");
 
 

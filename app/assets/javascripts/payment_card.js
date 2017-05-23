@@ -1,9 +1,6 @@
 function PaymentCard(settings){
 
     this.default_settings = {
-        active: false,
-        momentum_nums:              [63, 66, 67, 68, 69],
-        validation_rule:            'valid_card_number_maestro_momentum',
         card_wrapper:               '.card_data',
         card_input_wrapper:         '.card-num-wrapper',
         first_input:                '#card_number_0',
@@ -22,19 +19,18 @@ function PaymentCard(settings){
         if_you_have_cvv:            '#if_you_have_cvv'
     };
     this.settings = $.extend({}, this.default_settings, settings);
+    this.card_types = [];
+    this.states = {
+        'default': new DefaultState()
+    };
     this.default = {
         cvv_description: null
     };
-    this.card_settings = [
-        {
-            card_type: 'momentum',
-            numbers: [63, 66, 67, 68, 69]
-        },
-        {
-            card_type: 'amex',
-            numbers: [34, 37]
-        }
-    ];
+    this.addCardType = function(card_type)
+    {
+      this.card_types.push(card_type);
+      this.defineAvailableStates();
+    };
 
     this.getNumberInputs = function(){
         var wrapper = this.getWrapper();
@@ -62,12 +58,18 @@ function PaymentCard(settings){
           $(number).on('keyup', function(e){ self.operate(e); });
         });
     };
+    this.getForm = function(){
+      var form = $('form:first');
+
+      if(window.time_to_debug){
+          var serializedArray = form.serializeArrray();
+          console.table(serializedArray);
+      }
+
+      return form;
+    };
     this.getFirstInput = function(){
         return $(this.settings.card_input_wrapper + ' ' + this.settings.first_input);
-    };
-    this.setActive = function(active)
-    {
-        this.active = active;
     };
     //FIXME: включення через кукі доробити
     this.debug = function(message)
@@ -103,7 +105,7 @@ function PaymentCard(settings){
         if(typeof combination === 'string' && combination.length >= 2 && parseInt(combination)){
             combination = parseInt(combination.substr(0,2));
         }
-        var result = this.card_settings.filter(function(item) { return item.numbers.indexOf(combination) >= 0; });
+        var result = this.card_types.filter(function(item) { return item.numbers.indexOf(combination) >= 0; });
 
         if(result.length > 1) { throw Error('More than one card type was found by combination:  ' + combination); }
 
@@ -143,7 +145,7 @@ function PaymentCard(settings){
       var self = this;
 
       if(typeof $.validator.methods[rule] !== 'function'){
-        $.validator.addMethod(self.settings.validation_rule, function(value, element){
+        $.validator.addMethod(rule, function(value, element){
           var first_n = $(element).parents('.card_num').find('input:first').val().substr(0, 2);
 
           var matches = self.getCardTypeByFirstDigits(first_n);
@@ -216,22 +218,32 @@ function PaymentCard(settings){
     };
     this.getAllStates = function()
     {
-        if(!this.hasOwnProperty('states')){
-            var states = { 
-                'default':              new DefaultState(),
-                'momentum_activated':   new MomentumActivatedState(),
-                'momentum_filled':      new MomentumFilledState(),
-                'amex_activated':       new AmexActivatedState()
-            };
-            this.states = states;
-        }
-
         return this.states;
+    };
+    this.getCardTypes = function()
+    {
+        return this.card_types;
+    };
+    this.defineAvailableStates = function()
+    {
+        var card_types = this.getCardTypes();
+        var states = {};
+
+        card_types.forEach(function(card_type){
+            if(card_type && card_type.hasOwnProperty('states')){
+                card_type.states.forEach(function(state){
+                    var obj = new state();
+                    states[obj.name] = obj;
+                });
+            }
+        });
+
+        $.extend(this.states, states);
     };
     this.getState = function(state)
     {   
         var states = this.getAllStates();
-        if(!states[state]) throw('State '+state+' not found!');
+        if(!states[state]) throw('State ' + state + ' not found!');
 
         return states[state];
     };
@@ -368,7 +380,7 @@ function AmexActivatedState()
 
         context.card_cvv
             .prop('maxlength', cvvInputSize)
-            .data('length', cvvInputSize); //.attr('data-length', cvvInputSize); //.prop('data-length', cvvInputSize);
+            .data('length', cvvInputSize);
 
         this.set_cvv_description(context);
 

@@ -81,6 +81,16 @@ describe('Fatpay_PayController', function(){
 	describe('PaymentCard', function(){
 		beforeEach(function(){
 			this.card = new PaymentCard(this.settings);
+            this.card.addCardType({
+                card_type: 'momentum',
+                numbers: [63, 66, 67, 68, 69],
+                states: [MomentumActivatedState, MomentumFilledState]
+            });
+            this.card.addCardType({
+                card_type: 'amex',
+                numbers: [34, 37],
+                states: [AmexActivatedState]
+            });
 		});
 		describe('Default', function(){
 			beforeEach(function(){

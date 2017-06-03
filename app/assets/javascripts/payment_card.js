@@ -26,6 +26,8 @@ function PaymentCard(settings){
     this.default = {
         cvv_description: null
     };
+    this.currentCardType = null;
+
     this.addCardType = function(card_type)
     {
       this.card_types.push(card_type);
@@ -111,11 +113,24 @@ function PaymentCard(settings){
 
         return result.length ? result[0] : false;
     };
+    this.defineState = function(card_setting)
+    {
+        if(card_setting.hasOwnProperty('card_type')){
+            var state = card_setting.card_type + '_activated';
+
+            if(this.states.hasOwnProperty(state)){
+                return state;
+            }
+        }
+
+        return 'default';
+    };
     this.transit = function(combination){
         var card_setting = this.getCardTypeByFirstDigits(combination);
-        var state = card_setting && card_setting.hasOwnProperty('card_type') ? card_setting.card_type + '_activated' : 'default';
+        var state = this.defineState(card_setting);
 
         this.transitToState(state);
+        this.setCurrentCardType(card_setting);
     };
     this.bindFirstInputListener = function(){
         var self = this;
@@ -264,11 +279,25 @@ function PaymentCard(settings){
         self.transitToState('momentum_activated');
       });
     };
+    this.initializeDefaultCardTypes = function()
+    {
+        this.addCardType({
+            card_type: 'visa',
+            numbers: [40, 41, 42, 43, 44, 45, 46, 47, 48, 49],
+            states: [DefaultState]
+        });
+        this.addCardType({
+            card_type: 'mastercard',
+            numbers: [51, 52, 53, 54, 55],
+            states: [DefaultState]
+        });
+    };
     this.init = function(){
         this.transitToState('default');
         this.bindListeners();
         this.bindFirstInputListener();
-        this.bindLinkIfYouHaveCvv();
+        this.initializeDefaultCardTypes();
+        this.setHub(new Hub());
     };
     this.hasDefaultValue = function(key)
     {
@@ -285,6 +314,88 @@ function PaymentCard(settings){
     this.getDefaultValue = function(key)
     {
         return this.default[key];
+    };
+    this.getCurrentCardType = function()
+    {
+        return this.currentCardType;
+    };
+    this.reset = function()
+    {
+        var form = this.getForm();
+        form[0].reset();
+        this.transitToState('default');
+        this.setCurrentCardType(false);
+    };
+    this.setCurrentCardType = function(type)
+    {
+        var card_type = typeof type === 'object' ? type.card_type : false;
+        var message = 'card type changed ';
+        message += this.currentCardType ? 'from ' + this.currentCardType.card_type : '';
+        message += 'to ' + card_type;
+
+        var envelope = {
+            event: 'card_type_changed',
+            message: message,
+            data: { card_type: card_type }
+        };
+
+        this.getHub().publish(envelope.event, envelope);
+        this.currentCardType = type;
+    };
+    this.getHub = function()
+    {
+        return this.hub;
+    };
+    this.setHub = function(hub)
+    {
+        this.hub = hub;
+    };
+};
+
+function Hub()
+{
+    var events = {};
+
+    this.getEvents = function()
+    {
+      return events;
+    };
+    this.delayPublishing = function(event, data)
+    {
+      events[event]['publishing'] = data;
+    };
+    this.getDelayedPublishing = function(event)
+    {
+      return events[event].hasOwnProperty('publishing') && events[event]['publishing'];
+    };
+    this.checkEvent = function(event)
+    {
+        if(! events.hasOwnProperty(event)){
+            events[event] = { callbacks: [] };
+        }
+    };
+    this.subscribe = function(event, callback, context)
+    {
+        this.checkEvent(event);
+        if(events[event].callbacks.indexOf(callback) === -1){
+            if(typeof context === 'object') {
+               callback = callback.bind(context);
+            }
+            var delayedPublishing = this.getDelayedPublishing(event);
+
+            if(delayedPublishing) { callback.call(this, delayedPublishing); }
+
+            events[event].callbacks.push(callback);
+        }
+    };
+    this.publish = function(event, data)
+    {
+        this.checkEvent(event);
+        this.delayPublishing(event, data);
+
+        events[event].callbacks.forEach(function(callback){
+           callback.call(this, data);
+        });
     };
 };
 

@@ -202,6 +202,8 @@
     describe('Maestro Momentum', function(){
         beforeEach(function(){
            this.card = new PaymentCard();
+           this.card.setHub(new Hub());
+           this.card.initializeDefaultCardTypes();
            this.card.addCardType({
                card_type: 'momentum',
                numbers: [63, 66, 67, 68, 69],
@@ -333,6 +335,174 @@
         expect(current_state instanceof DefaultState).toBeTruthy();
         this.card.transitToState('momentum_activated');
         expect(this.card.getCurrentState() instanceof MomentumActivatedState).toBeTruthy();
+    });
+    it('::getCardTypes', function(){
+        var types = this.card.getCardTypes();
+
+        expect(types.length).toEqual(3);
+    });
+    it('::getCurrentCardType', function(){
+        this.card.transit('');
+        expect(this.card.getCurrentCardType()).toBeFalsy();
+        this.card.transit('41');
+        var type = this.card.getCurrentCardType();
+        expect(type.card_type).toEqual('visa');
+        this.card.transit('55');
+        type = this.card.getCurrentCardType();
+        expect(type.card_type).toEqual('mastercard');
+        this.card.transit('63');
+        type = this.card.getCurrentCardType();
+        expect(type.card_type).toEqual('momentum');
+        this.card.transitToState('default');
+        type = this.card.getCurrentCardType();
+        expect(type.card_type).toEqual('momentum');
+        this.card.reset();
+        type = this.card.getCurrentCardType();
+        expect(type).toBeFalsy();
+    });
+    describe('Hub - Subscribe and Publish', function(){
+        it('within self', function(){
+            this.card.setHub(new Hub());
+            this.card.hub.subscribe('hello_world', function(data){
+                this.card.helloMessage = data;
+            }.bind(this));
+            this.card.hub.publish('hello_world', 'Hello World!');
+
+            expect(this.card.helloMessage).toEqual('Hello World!');
+        });
+        it('between two objects', function(){
+            var hub = new Hub();
+            this.card.setHub(hub);
+            var block = {};
+            block.hub = hub;
+
+            block.hub.subscribe('hello_world', function(data){
+                this.helloMessage = data;
+            }.bind(block));
+            this.card.hub.publish('hello_world', 'Hello World!');
+
+            expect(block.helloMessage).toEqual('Hello World!');
+        });
+        it('subscribes to multiple events by another object', function(){
+            var hub = new Hub();
+            var card = { hub: hub };
+            var block = { hub: hub };
+
+            card.hub.subscribe('foo', function(data){
+                this.foo = data;
+            }.bind(card));
+            card.hub.subscribe('bar', function(data){
+                this.bar = data;
+            }.bind(card));
+
+            block.hub.publish('foo', 'oof');
+            block.hub.publish('bar', 'rab');
+
+            expect(card.foo).toEqual('oof');
+            expect(card.bar).toEqual('rab');
+        });
+        it('subscribes to same event', function(){
+            var hub = new Hub();
+            var card = { hub: hub };
+            var block = { hub: hub };
+
+            card.hub.subscribe('foo', function(data){
+                this.foo = data;
+            }.bind(card));
+            card.hub.subscribe('foo', function(data){
+                this.bar = data;
+            }.bind(card));
+
+            block.hub.publish('foo', 'oof');
+
+            expect(Object.keys(hub.getEvents()).length).toEqual(1);
+            expect(hub.getEvents().foo.callbacks.length).toEqual(2);
+
+            expect(card.foo).toEqual('oof');
+            expect(card.bar).toEqual('oof');
+        });
+        it('subscribes to unpublished event', function(){
+            var hub = new Hub();
+            var card = { hub: hub };
+            var block = { hub: hub };
+
+            card.hub.subscribe('foo', function(data){
+                this.foo = data;
+            }.bind(card));
+            block.hub.publish('foo', 'foo');
+            block.hub.publish('bar', 'bar');
+
+            expect(Object.keys(hub.getEvents()).length).toEqual(2);
+            expect(hub.getEvents().foo.callbacks.length).toEqual(1);
+
+            expect(card.foo).toEqual('foo');
+            expect(card.bar).toBeFalsy();
+        });
+        it('subscribes multiple times to same event with same callback', function(){
+            var hub = new Hub();
+            var card = { hub: hub };
+
+            card.hub.subscribe('foo', function(data){
+                this.foo = data;
+            }.bind(card));
+            card.hub.subscribe('foo', function(data){
+                this.foo = data;
+            }.bind(card));
+            card.hub.subscribe('foo', function(data){
+                this.foo = data;
+            }.bind(card));
+            card.hub.publish('foo', 'bar');
+            expect(hub.getEvents().foo.callbacks.length).toEqual(3);
+
+            expect(card.foo).toEqual('bar');
+        });
+        it('subscribes with same callback', function(){
+            var hub = new Hub();
+            var card = { hub: hub };
+            var callback = function(data){
+              this.foo = data;
+            }.bind(card);
+
+            card.hub.subscribe('foo', callback);
+            card.hub.subscribe('foo', callback);
+
+            card.hub.publish('foo', 'bar');
+            expect(hub.getEvents().foo.callbacks.length).toEqual(1);
+
+            expect(card.foo).toEqual('bar');
+        });
+        it('pass context as param', function(){
+            var hub = new Hub();
+            var card = { hub: hub };
+            var callback = function(data){
+                this.foo = data;
+            };
+            card.hub.subscribe('foo', callback, card);
+            card.hub.publish('foo', 'bar');
+
+            expect(window.hasOwnProperty('foo')).toBeFalsy();
+            expect(hub.hasOwnProperty('foo')).toBeFalsy();
+            expect(card.foo).toEqual('bar');
+        });
+        it('change card type from maestro to visa', function(){
+            this.card.setHub(new Hub());
+            this.card.transit('41');
+
+            var message = {
+                event: 'card_type_changed',
+                message: 'card type changed to visa',
+                data: { card_type: 'visa' }
+            };
+            this.card.getHub().subscribe('card_type_changed', function(data){
+                this.foo = data;
+            }, this.card);
+
+            this.card.transit('');
+            this.card.transit('');
+            this.card.transit('41');
+
+            expect(this.card.foo).toEqual(message);
+        });
     });
     describe('Settings', function(){
         beforeEach(function(){
@@ -1009,6 +1179,7 @@
     describe('American Express', function(){
         beforeEach(function(){
            this.card = new PaymentCard();
+           this.card.setHub(new Hub());
            this.card.addCardType({card_type: 'amex', numbers: [34, 37], states: [AmexActivatedState]});
         });
         describe('validation', function(){

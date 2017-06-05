@@ -30,7 +30,8 @@ function PaymentCard(settings){
 
     this.addCardType = function(card_type)
     {
-      this.card_types.push(card_type);
+        var cardType = new CardType(card_type);
+      this.card_types.push(cardType);
       this.defineAvailableStates();
     };
 
@@ -110,6 +111,13 @@ function PaymentCard(settings){
         var result = this.card_types.filter(function(item) { return item.numbers.indexOf(combination) >= 0; });
 
         if(result.length > 1) { throw Error('More than one card type was found by combination:  ' + combination); }
+        if(result.length == 1 && ! result[0].isActive()) {
+            try {
+                throw Error('Card type ' + result[0].card_type + ' is disabled for the moment!');
+            }catch(e){
+                return false;
+            }
+        }
 
         return result.length ? result[0] : false;
     };
@@ -126,11 +134,11 @@ function PaymentCard(settings){
         return 'default';
     };
     this.transit = function(combination){
-        var card_setting = this.getCardTypeByFirstDigits(combination);
-        var state = this.defineState(card_setting);
+        var cardType = this.getCardTypeByFirstDigits(combination);
+        var state = this.defineState(cardType);
 
         this.transitToState(state);
-        this.setCurrentCardType(card_setting);
+        this.setCurrentCardType(cardType);
     };
     this.bindFirstInputListener = function(){
         var self = this;
@@ -235,9 +243,13 @@ function PaymentCard(settings){
     {
         return this.states;
     };
-    this.getCardTypes = function()
+    this.getCardTypes = function(active)
     {
-        return this.card_types;
+        var isActive = active == undefined ? true : active;
+
+        return this.card_types.filter(function(cardType){
+            return cardType.isActive() == isActive
+        });
     };
     this.defineAvailableStates = function()
     {
@@ -350,8 +362,34 @@ function PaymentCard(settings){
     {
         this.hub = hub;
     };
-};
+    this.getCardTypeById = function(id)
+    {
+      var result = this.card_types.filter(function(cardType){ return cardType.card_type === id; });
+      if(result.length !== 1) throw Error('card type by id: ' + id + ' not found!');
 
+      return result[0];
+    };
+};
+function CardType(obj)
+{
+    this.card_type = obj.card_type;
+    this.numbers = obj.numbers;
+    this.states = obj.states;
+    this.active = true;
+
+    this.disable = function()
+    {
+      this.active = false;
+    };
+    this.enable = function()
+    {
+        this.active = true;
+    };
+    this.isActive = function()
+    {
+        return this.active;
+    };
+};
 function Hub()
 {
     var events = {};

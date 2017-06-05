@@ -1,8 +1,3 @@
-/*
- TODO:
- - створити тест-кейси
- - підготувати середовище
- */
  describe("PaymentCard", function(){
     beforeEach(function(){
         loadFixtures("maestro_momentum.html");
@@ -336,10 +331,18 @@
         this.card.transitToState('momentum_activated');
         expect(this.card.getCurrentState() instanceof MomentumActivatedState).toBeTruthy();
     });
-    it('::getCardTypes', function(){
-        var types = this.card.getCardTypes();
-
-        expect(types.length).toEqual(3);
+    describe('::getCardTypes', function(){
+        it('all', function(){
+            expect(this.card.getCardTypes().length).toEqual(3);
+        });
+        it('enabled', function(){
+            this.card.getCardTypeById('momentum').disable();
+            expect(this.card.getCardTypes(true).length).toEqual(2);
+        });
+        it('disabled', function(){
+            this.card.getCardTypeById('momentum').disable();
+            expect(this.card.getCardTypes(false).length).toEqual(1);
+        });
     });
     it('::getCurrentCardType', function(){
         this.card.transit('');
@@ -359,6 +362,40 @@
         this.card.reset();
         type = this.card.getCurrentCardType();
         expect(type).toBeFalsy();
+    });
+    it('::getCardTypeById', function(){
+        var type = this.card.getCardTypeById('momentum');
+
+        expect(type instanceof CardType).toBeTruthy();
+        expect(type.card_type).toEqual('momentum');
+    });
+    it('::disableCardType', function(){
+       var types = this.card.getCardTypes();
+
+       expect(types.length).toEqual(3);
+
+       this.card.getCardTypeById('momentum').disable();
+
+       expect(this.card.getCardTypes(true).length).toEqual(2);
+       this.card.transit('63');
+       expect(this.card.getCurrentCardType()).toBeFalsy();
+       expect(this.card.getCurrentState().name).toEqual('default');
+    });
+    describe('CardType', function(){
+       it('initialize', function(){
+          var type = new CardType({ card_type: 'amex' });
+
+          expect(type.card_type).toEqual('amex');
+       });
+        it('disable', function(){
+            var type = new CardType({ card_type: 'amex' });
+
+            expect(type.isActive()).toBeTruthy();
+            type.disable();
+            expect(type.isActive()).toBeFalsy();
+            type.enable();
+            expect(type.isActive()).toBeTruthy();
+        });
     });
     describe('Hub - Subscribe and Publish', function(){
         it('within self', function(){
